@@ -7,11 +7,11 @@
 
 const LLMService = require('../../infrastructure/external/llmService');
 const MemoryService = require('../memory/memoryService');
-const EnhancedRagService = require('../university/enhancedRagService');
+const enhancedRagService = require('../university/enhancedRagService');
 
 class ChatService {
     constructor() {
-        this.ragService = EnhancedRagService;
+        this.ragService = enhancedRagService;
         this.llmService = new LLMService();
         this.memoryService = new MemoryService();
     }

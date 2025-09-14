@@ -8,7 +8,7 @@ const { setupVoiceRoutes } = require('./voice');
 const { setupChatRoutes } = require('./chat');
 const livekitRoutes = require('./livekit');
 const axios = require('axios');
-const EnhancedRagService = require('../../core/university/enhancedRagService');
+const enhancedRagService = require('../../core/university/enhancedRagService');
 
 /**
  * Sets up all API routes
@@ -37,10 +37,9 @@ function setupApiRoutes(app) {
 
             console.log(`🧠 Direct RAG API Query: "${query}" (${language}, ${isVoiceInteraction ? 'voice' : 'text'})`);
             
-            const ragService = new EnhancedRagService();
-            await ragService.initialize();
+            await enhancedRagService.initialize();
             
-            const result = await ragService.processQuery(query, sessionId, language, isVoiceInteraction);
+            const result = await enhancedRagService.processQuery(query, sessionId, language, isVoiceInteraction);
             
             res.json({
                 success: true,

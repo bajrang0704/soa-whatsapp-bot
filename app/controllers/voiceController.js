@@ -6,7 +6,7 @@
 
 const VoiceService = require('../../core/ai/voiceService');
 const { asyncHandler } = require('../middleware/errorHandler');
-const EnhancedRagService = require('../../core/university/enhancedRagService');
+const enhancedRagService = require('../../core/university/enhancedRagService');
 
 class VoiceController {
     constructor() {
@@ -397,7 +397,7 @@ class VoiceController {
                         console.log(`🧠 Processing RAG query: "${sttResult.transcript}" (${responseLanguage})`);
                         
                         // Call Enhanced RAG service directly (no HTTP call needed)
-                        const ragResponse = await EnhancedRagService.processQuery(
+                        const ragResponse = await enhancedRagService.processQuery(
                             sttResult.transcript,
                             'voice-pipeline-' + Date.now(),
                             responseLanguage,
