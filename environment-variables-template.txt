@@ -14,15 +14,15 @@ GOOGLE_CLOUD_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nMIIEvwIBADANBgkqhkiG9w0BA
 # LLM API KEYS
 # ===========================================
 # Add your actual API keys here
-GROQ_API_KEY=your_groq_api_key_here
-OPENAI_API_KEY=your_openai_api_key_here
-ANTHROPIC_API_KEY=your_anthropic_api_key_here
+GROQ_API_KEY=REPLACE_WITH_YOUR_GROQ_API_KEY
+OPENAI_API_KEY=REPLACE_WITH_YOUR_OPENAI_API_KEY
+ANTHROPIC_API_KEY=REPLACE_WITH_YOUR_ANTHROPIC_API_KEY
 
 # ===========================================
 # VOICE SERVICES
 # ===========================================
 # Deepgram API for speech-to-text
-DEEPGRAM_API_KEY=your_deepgram_api_key_here
+DEEPGRAM_API_KEY=REPLACE_WITH_YOUR_DEEPGRAM_API_KEY
 
 # LiveKit for real-time voice streaming
 LIVEKIT_URL=ws://localhost:7880

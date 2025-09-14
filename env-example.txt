@@ -1,9 +1,9 @@
 # Example Environment Variables for SOA WhatsApp Bot
 # Copy this file to .env and fill in your actual values
 
-# API Keys
-GROQ_API_KEY=your_groq_api_key_here
-OPENAI_API_KEY=your_openai_api_key_here
+# API Keys (Replace with your actual keys)
+GROQ_API_KEY=REPLACE_WITH_YOUR_GROQ_API_KEY
+OPENAI_API_KEY=REPLACE_WITH_YOUR_OPENAI_API_KEY
 
 # Application Settings
 NODE_ENV=production
