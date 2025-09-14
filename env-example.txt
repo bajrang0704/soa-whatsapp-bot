@@ -1,0 +1,23 @@
+# Example Environment Variables for SOA WhatsApp Bot
+# Copy this file to .env and fill in your actual values
+
+# API Keys
+GROQ_API_KEY=your_groq_api_key_here
+OPENAI_API_KEY=your_openai_api_key_here
+
+# Application Settings
+NODE_ENV=production
+PORT=8080
+LOG_LEVEL=info
+
+# Google Cloud Configuration
+# Copy your Google Cloud service account JSON file to the project root
+# and rename it to match the filename below
+GOOGLE_APPLICATION_CREDENTIALS=./plexiform-shine-471813-e5-83fb1800e34e.json
+
+# CORS Configuration
+CORS_ORIGIN=*
+
+# Performance Settings
+MAX_REQUEST_SIZE=10mb
+REQUEST_TIMEOUT=30000

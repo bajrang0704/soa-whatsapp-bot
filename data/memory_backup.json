@@ -1,0 +1,118 @@
+{
+  "conversation:client_ilvrcwrwf_1757360152742": {
+    "clientId": "client_ilvrcwrwf_1757360152742",
+    "messages": [
+      {
+        "id": "msg_1757360202419_o5ttq40lt",
+        "sender": "user",
+        "message": "Hello? I want my. Can you tell me about the college?",
+        "timestamp": "2025-09-08T19:36:42.419Z",
+        "metadata": {
+          "length": 52,
+          "wordCount": 11
+        }
+      },
+      {
+        "id": "msg_1757360202443_b07zn89fz",
+        "sender": "assistant",
+        "message": "Sorry, I couldn't find the information you requested. Please try again.",
+        "timestamp": "2025-09-08T19:36:42.443Z",
+        "metadata": {
+          "length": 71,
+          "wordCount": 11
+        }
+      }
+    ],
+    "startTime": "2025-09-08T19:36:42.419Z",
+    "language": "en",
+    "lastUpdated": "2025-09-08T19:36:42.443Z",
+    "messageCount": 2
+  },
+  "conversation:client_hq8r7k0ez_1757365853640": {
+    "clientId": "client_hq8r7k0ez_1757365853640",
+    "messages": [
+      {
+        "id": "msg_1757365902353_8ijli7nzx",
+        "sender": "user",
+        "message": "Tell me about the call list.",
+        "timestamp": "2025-09-08T21:11:42.353Z",
+        "metadata": {
+          "length": 28,
+          "wordCount": 6
+        }
+      },
+      {
+        "id": "msg_1757365902483_y6yfnv70r",
+        "sender": "assistant",
+        "message": "Hello! I'm the SOA University College AI assistant 🎓\n\nI can help you with:\n• Information about academic departments  \n• Admission requirements and registration\n• Tuition fees and costs\n• Available shifts (Morning/Evening)\n• Department comparisons\n\nAsk like: \"What are medicine requirements?\" or \"How much are engineering fees?\"",
+        "timestamp": "2025-09-08T21:11:42.483Z",
+        "metadata": {
+          "length": 328,
+          "wordCount": 43
+        }
+      }
+    ],
+    "startTime": "2025-09-08T21:11:42.353Z",
+    "language": "en",
+    "lastUpdated": "2025-09-08T21:11:42.484Z",
+    "messageCount": 2
+  },
+  "conversation:client_qea8gxrvd_1757365960326": {
+    "clientId": "client_qea8gxrvd_1757365960326",
+    "messages": [
+      {
+        "id": "msg_1757366017305_ed69wos66",
+        "sender": "user",
+        "message": "Tell me about the college. Tell me about the college.",
+        "timestamp": "2025-09-08T21:13:37.305Z",
+        "metadata": {
+          "length": 53,
+          "wordCount": 10
+        }
+      },
+      {
+        "id": "msg_1757366017321_psusm8qm6",
+        "sender": "assistant",
+        "message": "🎓 Welcome to SOA University College!\n\nWe are a distinguished university college with 16 different academic departments.\n\nOur main departments include:\n• Medicine, Dentistry, and Pharmacy\n• Various Engineering fields\n• Business Administration and Accounting  \n• Information Technology and Computer Science\n• Nursing and Medical Sciences\n\n📅 Academic Year: 2025-2026\n🕐 Shifts: Morning and Evening\n💰 Tuition fees vary by department\n\nHow can I help you further?",
+        "timestamp": "2025-09-08T21:13:37.321Z",
+        "metadata": {
+          "length": 460,
+          "wordCount": 58
+        }
+      }
+    ],
+    "startTime": "2025-09-08T21:13:37.305Z",
+    "language": "en",
+    "lastUpdated": "2025-09-08T21:13:37.321Z",
+    "messageCount": 2
+  },
+  "conversation:client_en45ckxi5_1757366237065": {
+    "clientId": "client_en45ckxi5_1757366237065",
+    "messages": [
+      {
+        "id": "msg_1757366289852_wia4fxzk9",
+        "sender": "user",
+        "message": "Tell me I put the college.",
+        "timestamp": "2025-09-08T21:18:09.852Z",
+        "metadata": {
+          "length": 26,
+          "wordCount": 6
+        }
+      },
+      {
+        "id": "msg_1757366289869_3pxcoi6vd",
+        "sender": "assistant",
+        "message": "🎓 Welcome to SOA University College!\n\nWe are a distinguished university college with 16 different academic departments.\n\nOur main departments include:\n• Medicine, Dentistry, and Pharmacy\n• Various Engineering fields\n• Business Administration and Accounting  \n• Information Technology and Computer Science\n• Nursing and Medical Sciences\n\n📅 Academic Year: 2025-2026\n🕐 Shifts: Morning and Evening\n💰 Tuition fees vary by department\n\nHow can I help you further?",
+        "timestamp": "2025-09-08T21:18:09.869Z",
+        "metadata": {
+          "length": 460,
+          "wordCount": 58
+        }
+      }
+    ],
+    "startTime": "2025-09-08T21:18:09.852Z",
+    "language": "en",
+    "lastUpdated": "2025-09-08T21:18:09.869Z",
+    "messageCount": 2
+  }
+}

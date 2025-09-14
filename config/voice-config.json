@@ -1,0 +1,110 @@
+{
+  "stt": {
+    "provider": "google-cloud",
+    "google-cloud": {
+      "model": "latest_long",
+      "language": "en-US",
+      "useEnhanced": true,
+      "enableAutomaticPunctuation": true,
+      "enableWordConfidence": true,
+      "alternativeLanguageCodes": ["ar-SA"]
+    },
+    "browser": {
+      "language": "auto",
+      "continuous": false,
+      "interimResults": true
+    }
+  },
+  "tts": {
+    "provider": "google-cloud",
+    "google-cloud": {
+      "model": "wavenet",
+      "useSSML": true,
+      "speakingRate": 1.2,
+      "pitch": 0,
+      "volumeGainDb": 0,
+      "effectsProfileId": ["telephony-class-application"]
+    },
+    "browser": {
+      "rate": 1,
+      "pitch": 1,
+      "volume": 1
+    }
+  },
+  "voices": {
+    "en": {
+      "female": {
+        "name": "English Female",
+        "voice": "en-US-Wavenet-F",
+        "provider": "google-cloud",
+        "settings": {
+          "speed": 1,
+          "pitch": 0,
+          "volume": 0
+        }
+      },
+      "male": {
+        "name": "English Male",
+        "voice": "en-US-Wavenet-D",
+        "provider": "google-cloud",
+        "settings": {
+          "speed": 1,
+          "pitch": 0,
+          "volume": 0
+        }
+      }
+    },
+    "ar": {
+      "female": {
+        "name": "Arabic Female",
+        "voice": "ar-XA-Wavenet-A",
+        "provider": "google-cloud",
+        "settings": {
+          "speed": 1,
+          "pitch": 0,
+          "volume": 0
+        }
+      },
+      "male": {
+        "name": "Arabic Male",
+        "voice": "ar-XA-Wavenet-B",
+        "provider": "google-cloud",
+        "settings": {
+          "speed": 1,
+          "pitch": 0,
+          "volume": 0
+        }
+      }
+    }
+  },
+  "supported_languages": [
+    "en",
+    "ar",
+    "es",
+    "fr",
+    "de",
+    "it",
+    "pt",
+    "pl",
+    "tr",
+    "ru",
+    "nl",
+    "cs",
+    "zh",
+    "ja",
+    "hu",
+    "ko"
+  ],
+  "features": {
+    "voiceCloning": true,
+    "realTimeSTT": true,
+    "emotionalTTS": true,
+    "languageDetection": true
+  },
+  "quality": {
+    "sttConfidenceThreshold": 0.7,
+    "maxAudioLength": 60,
+    "audioFormat": "wav",
+    "sampleRate": 16000
+  }
+}

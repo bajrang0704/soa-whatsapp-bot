@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SOA University College - AI Assistant</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+Arabic:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <i class="fas fa-graduation-cap"></i>
+                <span data-translate="soa-university-college">SOA University College</span>
+            </div>
+            <div class="nav-menu">
+                <a href="#home" class="nav-link active" data-translate="home">Home</a>
+                <a href="#departments" class="nav-link" data-translate="departments">Departments</a>
+                <a href="#chatbot" class="nav-link" data-translate="chat-assistant">Chat Assistant</a>
+                <a href="#voice" class="nav-link" data-translate="voice-agent">Voice Agent</a>
+                <a href="#contact" class="nav-link" data-translate="contact">Contact</a>
+            </div>
+            <div class="nav-controls">
+                <button class="language-btn" id="languageBtn">
+                    <i class="fas fa-globe"></i>
+                    <span data-translate="english">English</span>
+                </button>
+                <button class="theme-btn" id="themeBtn">
+                    <i class="fas fa-moon"></i>
+                </button>
+            </div>
+            <div class="hamburger" id="hamburger">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section id="home" class="hero">
+        <div class="hero-container">
+            <div class="hero-content">
+                <h1 class="hero-title">
+                    <span class="gradient-text" data-translate="welcome-title">Welcome to SOA University College</span>
+                </h1>
+                <p class="hero-subtitle" data-translate="welcome-subtitle">
+                    Your AI-powered academic companion for admissions, course information, and college guidance
+                </p>
+                <div class="hero-buttons">
+                    <button class="btn btn-primary" onclick="openChatbot()">
+                        <i class="fas fa-comments"></i>
+                        <span data-translate="start-chatting">Start Chatting</span>
+                    </button>
+                    <button class="btn btn-secondary" onclick="openVoiceAgent()">
+                        <i class="fas fa-microphone"></i>
+                        <span data-translate="voice-assistant">Voice Assistant</span>
+                    </button>
+                </div>
+            </div>
+            <div class="hero-image">
+                <div class="floating-card">
+                    <i class="fas fa-robot"></i>
+                    <h3 data-translate="ai-assistant">AI Iqra</h3>
+                    <p data-translate="available-247">24/7 Available</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Departments Section -->
+    <section id="departments" class="departments">
+        <div class="container">
+            <h2 class="section-title" data-translate="academic-departments">Academic Departments</h2>
+            <p class="section-subtitle" data-translate="departments-subtitle">Explore our diverse range of programs and specializations</p>
+            
+            <div class="search-container">
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="departmentSearch" placeholder="Search departments..." data-translate-placeholder="search-departments">
+                </div>
+                <div class="filter-buttons">
+                    <button class="filter-btn active" data-filter="all" data-translate="all">All</button>
+                    <button class="filter-btn" data-filter="medical" data-translate="medical">Medical</button>
+                    <button class="filter-btn" data-filter="engineering" data-translate="engineering">Engineering</button>
+                    <button class="filter-btn" data-filter="language" data-translate="language">Language</button>
+                    <button class="filter-btn" data-filter="other" data-translate="other">Other</button>
+                </div>
+            </div>
+
+            <div class="departments-grid" id="departmentsGrid">
+                <!-- Departments will be populated by JavaScript -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Chatbot Modal -->
+    <div id="chatbotModal" class="modal">
+        <div class="modal-content chatbot-modal">
+            <div class="modal-header">
+                <h3>
+                    <i class="fas fa-comments"></i>
+                    <span data-translate="chat-assistant-title">Chat Assistant</span>
+                </h3>
+                <button class="close-btn" onclick="closeChatbot()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="chat-container">
+                <div class="chat-messages" id="chatMessages">
+                    <div class="message bot-message">
+                        <div class="message-avatar">
+                            <i class="fas fa-robot"></i>
+                        </div>
+                        <div class="message-content">
+                            <p data-translate="chat-welcome">Hello! I'm your SOA University College assistant. How can I help you today?</p>
+                            <span class="message-time" data-translate="just-now">Just now</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="chat-input-container">
+                    <div class="chat-input">
+                        <input type="text" id="chatInput" placeholder="Type your message..." data-translate-placeholder="type-message">
+                        <button id="sendBtn">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Voice Agent Modal -->
+    <div id="voiceModal" class="modal">
+        <div class="modal-content voice-modal">
+            <div class="modal-header">
+                <h3>
+                    <i class="fas fa-microphone"></i>
+                    <span data-translate="voice-assistant-title">Voice Assistant</span>
+                </h3>
+                <button class="close-btn" onclick="closeVoiceAgent()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="voice-container">
+                <!-- Voice Animation Area -->
+                <div class="voice-animation-area">
+                    <div class="voice-avatar" id="voiceAvatar">
+                        <i class="fas fa-robot" id="voiceAvatarIcon"></i>
+                    </div>
+                    <div class="voice-waves" id="voiceWaves">
+                        <div class="wave"></div>
+                        <div class="wave"></div>
+                        <div class="wave"></div>
+                        <div class="wave"></div>
+                        <div class="wave"></div>
+                    </div>
+                </div>
+                
+                <!-- Voice Controls -->
+                <div class="voice-controls">
+                    <!-- Main Voice Assistant Button -->
+                    <button class="voice-main-btn" id="streamVoiceBtn" onclick="toggleStreamingVoice()">
+                        <div class="voice-btn-content">
+                            <i class="fas fa-microphone" id="streamVoiceBtnIcon"></i>
+                            <span class="voice-btn-text" id="voiceBtnText">Start Voice Assistant</span>
+                        </div>
+                    </button>
+                    
+                    <!-- Voice Status -->
+                    <div class="voice-status">
+                        <span id="voiceStatus" data-translate="voice-ready">Ready to start conversation</span>
+                    </div>
+                    
+                    <!-- Voice Instructions -->
+                    <div class="voice-instructions">
+                        <p class="instruction-text" id="voiceInstructions" data-translate="voice-welcome">Hello! I'm your AI voice assistant. Click "Start Voice Assistant" to begin, then click "Click to Record" to start recording. Speak your question and click again to stop. I can help you with information about SOA University College departments, admission requirements, and more.</p>
+                    </div>
+                    
+                    <!-- Conversation Features -->
+                    <div class="voice-features">
+                        <div class="feature-item">
+                            <i class="fas fa-bolt"></i>
+                            <span>Ultra-low latency</span>
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-brain"></i>
+                            <span>AI-powered responses</span>
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-language"></i>
+                            <span>Multi-language support</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Real-time Transcript Display -->
+                    <div class="transcript-display" id="transcriptDisplay" style="display: none;">
+                        <h4>Live Transcript:</h4>
+                        <div class="transcript-content">
+                            <p id="partialTranscript" class="partial-transcript"></p>
+                            <p id="finalTranscript" class="final-transcript"></p>
+                        </div>
+                    </div>
+                    
+                    <!-- Connection Status -->
+                    <div class="connection-status" id="connectionStatus" style="display: none;">
+                        <span class="status-indicator" id="statusIndicator">●</span>
+                        <span id="statusText">Connecting...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Info Cards -->
+    <section class="quick-info">
+        <div class="container">
+            <div class="info-cards">
+                <div class="info-card">
+                    <i class="fas fa-calendar-alt"></i>
+                    <h3 data-translate="academic-year">Academic Year</h3>
+                    <p>2025-2026</p>
+                </div>
+                <div class="info-card">
+                    <i class="fas fa-users"></i>
+                    <h3 data-translate="departments-count">Departments</h3>
+                    <p id="departmentCount">16</p>
+                </div>
+                <div class="info-card">
+                    <i class="fas fa-clock"></i>
+                    <h3 data-translate="shifts-available">Shifts</h3>
+                    <p data-translate="morning-evening">Morning & Evening</p>
+                </div>
+                <div class="info-card">
+                    <i class="fas fa-graduation-cap"></i>
+                    <h3 data-translate="programs">Programs</h3>
+                    <p data-translate="undergraduate">Undergraduate</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3 data-translate="soa-university-college">SOA University College</h3>
+                    <p data-translate="footer-description">Empowering students through innovative education and AI-driven support.</p>
+                </div>
+                <div class="footer-section">
+                    <h3 data-translate="quick-links">Quick Links</h3>
+                    <ul>
+                        <li><a href="#departments" data-translate="departments">Departments</a></li>
+                        <li><a href="#chatbot" data-translate="chat-assistant">Chat Assistant</a></li>
+                        <li><a href="#voice" data-translate="voice-agent">Voice Agent</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3 data-translate="contact-info">Contact</h3>
+                    <p data-translate="email">Email: info@soa.edu.iq</p>
+                    <p data-translate="phone">Phone: +964 XXX XXX XXXX</p>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p data-translate="copyright">&copy; 2025 SOA University College. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/ios-init.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script type="module" src="js/ios-compatibility.js"></script>
+    <script src="js/livekit-service.js"></script>
+    <script src="js/fallback-voice-service.js"></script>
+    <script src="js/bundle.js"></script>
+</body>
+</html>

@@ -1,0 +1,96 @@
+{
+  "name": "soa-webchat-bot",
+  "version": "2.0.0",
+  "description": "Web-based chatbot with voice features for SOA University information",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "dev": "nodemon app.js",
+    "build": "echo 'No build step required for Node.js'",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "webchat",
+    "chatbot",
+    "voice-assistant",
+    "soa",
+    "university",
+    "whisper",
+    "xtts",
+    "speech-to-text",
+    "text-to-speech",
+    "multilingual",
+    "arabic",
+    "rag"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "dependencies": {
+    "@google-cloud/speech": "^7.2.0",
+    "@google-cloud/text-to-speech": "^5.8.1",
+    "@xenova/transformers": "^2.6.0",
+    "axios": "^1.6.0",
+    "body-parser": "^1.20.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "express-validator": "^7.2.1",
+    "form-data": "^4.0.0",
+    "fs-extra": "^11.1.1",
+    "jsonwebtoken": "^9.0.2",
+    "livekit-client": "^2.15.6",
+    "livekit-server-sdk": "^2.13.3",
+    "multer": "^1.4.5-lts.1",
+    "natural": "^6.5.0",
+    "socket.io": "^4.7.4",
+    "ws": "^8.18.3"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2",
+    "concurrently": "^8.2.2"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "voice": {
+    "stt": {
+      "deepgram": {
+        "models": [
+          "nova-3"
+        ],
+        "languages": [
+          "en",
+          "ar",
+          "auto"
+        ]
+      }
+    },
+    "tts": {
+      "google-cloud": {
+        "models": [
+          "wavenet"
+        ],
+        "languages": [
+          "en",
+          "ar"
+        ],
+        "voices": {
+          "en": [
+            "en-US-Wavenet-F",
+            "en-US-Wavenet-D"
+          ],
+          "ar": [
+            "ar-XA-Wavenet-A",
+            "ar-XA-Wavenet-B"
+          ]
+        }
+      }
+    }
+  },
+  "directories": {
+    "models": "./models",
+    "temp": "./temp",
+    "config": "./config",
+    "public": "./public"
+  }
+}

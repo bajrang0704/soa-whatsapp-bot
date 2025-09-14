@@ -1,0 +1,51 @@
+{
+  "livekit": {
+    "url": "ws://localhost:7880",
+    "apiKey": "devkey",
+    "apiSecret": "secret",
+    "maxParticipants": 10,
+    "emptyTimeout": 300
+  },
+  "rag": {
+    "integrated": true,
+    "timeout": 3000,
+    "retryAttempts": 3
+  },
+  "voice": {
+    "activityThreshold": 0.1,
+    "silenceTimeout": 2000,
+    "maxRecordingTime": 30000,
+    "sampleRate": 16000,
+    "channels": 1
+  },
+  "tts": {
+    "providers": {
+      "deepgram": {
+        "enabled": true,
+        "latency": "low",
+        "endpoint": "/api/voice/text-to-speech"
+      },
+      "elevenlabs": {
+        "enabled": false,
+        "latency": "ultra-low",
+        "endpoint": "https://api.elevenlabs.io/v1/text-to-speech"
+      },
+      "openai": {
+        "enabled": false,
+        "latency": "low",
+        "endpoint": "https://api.openai.com/v1/audio/speech"
+      }
+    },
+    "defaultProvider": "deepgram",
+    "chunkSize": 100,
+    "streamingDelay": 100
+  },
+  "features": {
+    "realTimeAudio": true,
+    "voiceActivityDetection": true,
+    "ragIntegration": true,
+    "multiLanguage": true,
+    "streamingTts": true,
+    "ultraLowLatency": true
+  }
+}

@@ -1,0 +1,25 @@
+@echo off
+echo 🚀 Deploying SOA WhatsApp Bot to Google Cloud Run...
+
+REM Set your project ID
+set PROJECT_ID=plexiform-shine-471813-e5
+
+REM Build and deploy to Cloud Run
+gcloud run deploy soa-whatsapp-bot ^
+  --source . ^
+  --region us-central1 ^
+  --allow-unauthenticated ^
+  --memory 4Gi ^
+  --cpu 2 ^
+  --timeout 300 ^
+  --cpu-boost ^
+  --execution-environment gen2 ^
+  --set-env-vars="NODE_ENV=production,SKIP_ENHANCED_RAG=true" ^
+  --set-env-vars="GOOGLE_CLOUD_PROJECT_ID=plexiform-shine-471813-e5" ^
+  --set-env-vars="GOOGLE_CLOUD_PRIVATE_KEY=-----BEGIN PRIVATE KEY-----\nMIIEvwIBADANBgkqhkiG9w0BAQEFAASCBKkwggSlAgEAAoIBAQDZXVCokwkCOlZt\nf/JqQR85KeiRVnc2wkvMJVH+Mds19zy72vtZzKZtf7dVPtu6C7pRgpp3wTilKvx1\nnV0HfFkt3WltdaU5qbIqKzeAk285UbmJS2vGigrr409JAC/DnDD4L5q/z95RRmk/\nNn9VJhM5fJu1CcuLXF7C1EFqcT7H9QmIitb0G+pkox86Oz3YeUbDQ3klhS8GGtFO\nX3aOsAeXYZDKNsiu5+E/1RPCW5l1npCyd+bnZBTUfO7F9fZXCpB03cj+j8ERU7iO\ndjp3nqqSJf5nJ0HzzQYSKkRbhyhcdSJcwZyv9sJ+jJG33OyFHrE0Mt9D7uUlIAAv\nyFjZl09rAgMBAAECggEAWJutscqetYXKjcDGtYHulIL9B6JT3sK9226rShBQ6GLt\nIzdVl3nRrnmN5vZE5Ea7oVa4WXEvAkXPvLJ1pgOO5x+HRtPakvMWahJMAeIYSSmD\nlPBl8v17DkYPoBavYfJeFA5z6xV173Pgm6A/sBphY+HkJ5zimOEC0DFuqVGY4jHF\nZGL5Bv4AO/G2aE5NSdqzEwKTTi4Ik3WIhJVdr7rF3rwbbYHqVIdgYnHPf/Od1CFW\nugSlfmjju60xLMXbhiwQqjKDDuUNRetZN45SSTvCRxdubZ9AvCioG8+7O4Q/MS7v\nHLlHKarwAPrFqEY9VOcs5dJv3CnORFXt8muHKKDKwQKBgQDvdIyTPpzevEkSPHwU\nY5PgskRYCR6BamhUy+gyGQMvCo6E+Yspozg6farIieXEB5s5UlKXJlUL9C2bgvFZ\nTEvwDzeF1iHc2IUwV8IHjIkSyIPrRq4rOxiK1b0anQX+tsFVTS4RmmVGXKEC+wZp\nyW1rY0IoOQcJtAyp5PZY0zkE8wKBgQDoYgca3qH4g0TVDLoCtFSyjgxyF9O8gP/8\n7h0/vBTRQMyCbZ16uX4BqFlERB7ssqseYulUyMdDF7mQuQrlhaGzANoSPI0NKs+J\nc2IeYM/M4mpoBARHBZRviorqZLRYKkMmJBQjc9Z2E8nXTcLe7EAldPT0E2/m9U8b\nzHk2/L+JqQKBgQCBtTRgnk4DKSK7yh+8O6Ri1q3Gsknf+G/DXyDL4lijJqjExxfm\n2g8fP+s+7dOUODqQ9lLepVj0PLRnxKpPoNCRnOyKhs+Y/YBIC4GC7VFi51LuIz89\nE6nbqqPgwqX4r65SMph92JB7aLmfD7MNopquzPmNKDbzvqANd4Up4GDGmQKBgQDS\nkakwftYz8vbXOt3+f1tUJIVAiTiy0g2kKjvUud//MQFfmmYdg6GbbOnegv+mqcuH\nEEewLPLqZ8AdVJ98FVfNdRMlfTqu2MEQIr6hGkaRuASFVkZt+K9lVxvDgxcr4LfS\nAtVAvsFxY0L9VpgjGd6SUmV4GXjHxjc10FVyLxp8aQKBgQDS5lJWSxe4omQMHkNF\nPc+3x/Zqf47RcCgjET0AhsyA5leRE4Vfdn5lfPf4q2B/pYtmLcxKSqxosjZjan2M\naKUu8LUiNUo/XrlUrubShjwouW6RMeg9PXgiHSz7n3JLXYwhGf/z+bEz8H2KcsGy\npaKkR17qHtCtQ9a9lbPaWRtN1w==\n-----END PRIVATE KEY-----\n" ^
+  --set-env-vars="GOOGLE_CLOUD_CLIENT_EMAIL=voice-agent@plexiform-shine-471813-e5.iam.gserviceaccount.com" ^
+  --set-env-vars="GROQ_API_KEY=your_groq_api_key_here"
+
+echo ✅ Deployment complete!
+echo 🌐 Your app will be available at: https://soa-whatsapp-bot-[hash]-uc.a.run.app
+pause

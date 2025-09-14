@@ -1,0 +1,244 @@
+{
+  "university": {
+    "name_en": "SOA University College",
+    "name_ar": "كلية سلطان للفنون",
+    "academic_year": "2025-2026",
+    "location": "Iraq"
+  },
+  "departments": [
+    {
+      "id": 1,
+      "name_en": "Dentistry",
+      "name_ar": "طب الأسنان",
+      "admission_channels": ["Scientific – Biology"],
+      "minimum_grade": 79.5,
+      "tuition_fee": 10000000,
+      "currency": "IQD",
+      "shift": "Morning only",
+      "keywords": ["dentistry", "dental", "teeth", "طب الأسنان", "أسنان", "طبيب أسنان"]
+    },
+    {
+      "id": 2,
+      "name_en": "Pharmacy",
+      "name_ar": "الصيدلة",
+      "admission_channels": ["Scientific – Biology"],
+      "minimum_grade": 79.5,
+      "tuition_fee": 10000000,
+      "currency": "IQD",
+      "shift": "Morning only",
+      "keywords": ["pharmacy", "pharmacist", "medicine", "الصيدلة", "صيدلي", "دواء"]
+    },
+    {
+      "id": 3,
+      "name_en": "Medical Laboratory Techniques",
+      "name_ar": "تقنيات المختبرات الطبية",
+      "admission_channels": ["Scientific – Biology"],
+      "minimum_grade": {
+        "morning": 69.5,
+        "evening": 64.5
+      },
+      "tuition_fee": {
+        "morning": 3700000,
+        "evening": 3900000
+      },
+      "currency": "IQD",
+      "shift": "Morning and Evening",
+      "keywords": ["medical lab", "laboratory", "lab tech", "مختبرات طبية", "تحاليل", "معمل"]
+    },
+    {
+      "id": 4,
+      "name_en": "Radiology Techniques",
+      "name_ar": "تقنيات الأشعة",
+      "admission_channels": ["Scientific – Biology"],
+      "minimum_grade": {
+        "morning": 69.5,
+        "evening": 64.5
+      },
+      "tuition_fee": {
+        "morning": 3700000,
+        "evening": 3900000
+      },
+      "currency": "IQD",
+      "shift": "Morning and Evening",
+      "keywords": ["radiology", "x-ray", "imaging", "أشعة", "تصوير طبي", "راديولوجي"]
+    },
+    {
+      "id": 5,
+      "name_en": "Dental Industry Techniques",
+      "name_ar": "تقنيات صناعة الأسنان",
+      "admission_channels": ["Scientific – Biology"],
+      "minimum_grade": {
+        "morning": 69.5,
+        "evening": 64.5
+      },
+      "tuition_fee": {
+        "morning": 3700000,
+        "evening": 3900000
+      },
+      "currency": "IQD",
+      "shift": "Morning and Evening",
+      "keywords": ["dental tech", "dental lab", "prosthetics", "صناعة الأسنان", "تركيبات", "أطقم"]
+    },
+    {
+      "id": 6,
+      "name_en": "Anesthesia Techniques",
+      "name_ar": "تقنيات التخدير",
+      "admission_channels": ["Scientific – Biology"],
+      "minimum_grade": {
+        "morning": 69.5,
+        "evening": 64.5
+      },
+      "tuition_fee": {
+        "morning": 3700000,
+        "evening": 3900000
+      },
+      "currency": "IQD",
+      "shift": "Morning and Evening",
+      "keywords": ["anesthesia", "anesthetist", "surgery", "تخدير", "مخدر", "عمليات"]
+    },
+    {
+      "id": 7,
+      "name_en": "Optical Techniques",
+      "name_ar": "تقنيات البصريات",
+      "admission_channels": ["Scientific – Biology – Applied"],
+      "minimum_grade": {
+        "morning": 69.5,
+        "evening": 64.5
+      },
+      "tuition_fee": {
+        "morning": 3700000,
+        "evening": 3900000
+      },
+      "currency": "IQD",
+      "shift": "Morning and Evening",
+      "keywords": ["optics", "optician", "glasses", "vision", "بصريات", "نظارات", "عيون"]
+    },
+    {
+      "id": 8,
+      "name_en": "Petroleum Engineering",
+      "name_ar": "هندسة النفط",
+      "admission_channels": ["Scientific – Applied"],
+      "minimum_grade": 71.5,
+      "tuition_fee": 3000000,
+      "currency": "IQD",
+      "shift": "Morning only",
+      "keywords": ["petroleum", "oil", "gas", "engineering", "هندسة النفط", "بترول", "غاز"]
+    },
+    {
+      "id": 9,
+      "name_en": "Construction & Project Management Engineering",
+      "name_ar": "هندسة البناء وإدارة المشاريع",
+      "admission_channels": ["Scientific – Applied"],
+      "minimum_grade": {
+        "morning": 61.5,
+        "evening": 59.5
+      },
+      "tuition_fee": {
+        "morning": 3000000,
+        "evening": 3200000
+      },
+      "currency": "IQD",
+      "shift": "Morning and Evening",
+      "keywords": ["construction", "civil", "project management", "building", "هندسة البناء", "مدني", "إنشاءات"]
+    },
+    {
+      "id": 10,
+      "name_en": "Law",
+      "name_ar": "القانون",
+      "admission_channels": ["Scientific – Biology – Applied – Literary"],
+      "minimum_grade": {
+        "morning": 64.5,
+        "evening": 60.5
+      },
+      "tuition_fee": {
+        "morning": 1760000,
+        "evening": 1980000
+      },
+      "currency": "IQD",
+      "shift": "Morning and Evening",
+      "keywords": ["law", "legal", "lawyer", "القانون", "محامي", "قانوني"]
+    },
+    {
+      "id": 11,
+      "name_en": "Physical Education and Sports Sciences",
+      "name_ar": "التربية البدنية وعلوم الرياضة",
+      "admission_channels": ["Scientific – Biology – Applied – Literary – Vocational – Agricultural – Commercial – Industrial"],
+      "minimum_grade": 50,
+      "tuition_fee": {
+        "morning": 1760000,
+        "evening": 1980000
+      },
+      "currency": "IQD",
+      "shift": "Morning and Evening",
+      "keywords": ["physical education", "sports", "PE", "athletics", "التربية البدنية", "رياضة", "ألعاب"]
+    },
+    {
+      "id": 12,
+      "name_en": "English Language",
+      "name_ar": "اللغة الإنكليزية",
+      "admission_channels": ["Scientific – Biology – Applied – Literary + Graduates of Art Institutes (English Dept)"],
+      "minimum_grade": 50,
+      "tuition_fee": {
+        "morning": 1760000,
+        "evening": 1980000
+      },
+      "currency": "IQD",
+      "shift": "Morning and Evening",
+      "keywords": ["english", "language", "linguistics", "اللغة الإنكليزية", "إنجليزي", "لغة"]
+    },
+    {
+      "id": 13,
+      "name_en": "Arabic Language",
+      "name_ar": "اللغة العربية",
+      "admission_channels": ["Scientific – Biology – Applied – Literary + Graduates of Art Institutes (Arabic Dept)"],
+      "minimum_grade": 50,
+      "tuition_fee": 1500000,
+      "currency": "IQD",
+      "shift": "Morning only",
+      "keywords": ["arabic", "language", "literature", "اللغة العربية", "عربي", "أدب"]
+    },
+    {
+      "id": 14,
+      "name_en": "Digital Media (Media Technology)",
+      "name_ar": "الإعلام الرقمي (تكنولوجيا الإعلام)",
+      "admission_channels": ["Literary – Industrial – Commercial – Agricultural"],
+      "minimum_grade": 50,
+      "tuition_fee": 1760000,
+      "currency": "IQD",
+      "shift": "Morning only",
+      "keywords": ["media", "digital media", "journalism", "communication", "إعلام", "صحافة", "تكنولوجيا"]
+    },
+    {
+      "id": 15,
+      "name_en": "Translation",
+      "name_ar": "الترجمة",
+      "admission_channels": ["Scientific – Biology – Applied – Literary + Graduates of Art Institutes (Language Dept)"],
+      "minimum_grade": 50,
+      "tuition_fee": 1760000,
+      "currency": "IQD",
+      "shift": "Morning only",
+      "keywords": ["translation", "translator", "interpretation", "ترجمة", "مترجم", "تفسير"]
+    },
+    {
+      "id": 16,
+      "name_en": "Computer Science Education",
+      "name_ar": "تربية علوم الحاسبات",
+      "admission_channels": ["Scientific (Biology / Applied) + Graduates of Computer, Management, and Accounting Institutes + Related Vocational (Industrial, Agricultural, Commercial)"],
+      "minimum_grade": 56.5,
+      "tuition_fee": 1760000,
+      "currency": "IQD",
+      "shift": "Morning only",
+      "keywords": ["computer science", "IT", "programming", "technology", "علوم الحاسبات", "حاسوب", "برمجة"]
+    }
+  ],
+  "general_info": {
+    "contact": {
+      "phone": "+964 XXX XXX XXXX",
+      "email": "info@soa-university.edu.iq",
+      "address": "Iraq"
+    },
+    "application_period": "Usually June - September",
+    "academic_year_start": "October",
+    "language_of_instruction": "Arabic and English"
+  }
+}
