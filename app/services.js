@@ -58,6 +58,9 @@ async function initializeExternalServices() {
         'DEEPGRAM_API_KEY': 'Deepgram STT/TTS',
         'GROQ_API_KEY': 'Groq LLM',
         'OPENAI_API_KEY': 'OpenAI LLM',
+        'ANTHROPIC_API_KEY': 'Anthropic LLM',
+        'GOOGLE_CLOUD_PROJECT_ID': 'Google Cloud Services',
+        'LIVEKIT_API_KEY': 'LiveKit Voice Streaming',
         'XTTS_SERVER_URL': 'XTTS Server'
     };
     
@@ -78,8 +81,9 @@ async function initializeCoreServices() {
     
     // Initialize Enhanced RAG Service
     try {
-        const EnhancedRagService = require('../core/university/enhancedRagService');
-        await EnhancedRagService.initialize();
+        const enhancedRagService = require('../core/university/enhancedRagService');
+        
+        await enhancedRagService.initialize();
         console.log('✅ Enhanced RAG Service initialized');
     } catch (error) {
         console.warn('⚠️ Enhanced RAG Service initialization failed:', error.message);
