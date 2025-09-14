@@ -974,6 +974,11 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 /* Voice Button States */
+.voice-main-btn.ready {
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+    animation: none;
+}
+
 .voice-main-btn.connecting {
     background: linear-gradient(135deg, var(--warning-color), #d97706);
     animation: pulse 1.5s infinite;
@@ -984,7 +989,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .voice-main-btn.active {
-    background: linear-gradient(135deg, var(--danger-color), #dc2626);
+    background: linear-gradient(135deg, var(--success-color), #059669);
     animation: pulse 1s infinite;
 }
 

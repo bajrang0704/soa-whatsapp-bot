@@ -124,3 +124,14 @@ build/
 
 # Local development
 download.wav
+
+deploy-to-google-cloud.bat
+deploy-google-cloud.bat
+deploy.sh
+dockerfile.simple
+Dockerfile.ultra-simple
+test-script.sh
+download.wav
+cloudbuild.yaml
+.env 
+.env.example

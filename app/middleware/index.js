@@ -19,16 +19,22 @@ const { rateLimiter } = require('./rateLimiter');
  * @param {express.Application} app - Express application instance
  */
 function setupMiddleware(app) {
-    // CORS configuration - more permissive for ngrok
+    // CORS configuration - permissive for cloud deployment
     app.use(cors({
         origin: function (origin, callback) {
             // Allow requests with no origin (like mobile apps or curl requests)
             if (!origin) return callback(null, true);
             
-            // Allow localhost and ngrok domains
+            // In production, allow all origins for cloud deployment
+            if (process.env.NODE_ENV === 'production') {
+                return callback(null, true);
+            }
+            
+            // Allow localhost and ngrok domains for development
             if (origin.includes('localhost') || 
                 origin.includes('ngrok') || 
                 origin.includes('127.0.0.1') ||
+                origin.includes('run.app') ||
                 process.env.CORS_ORIGIN === "*") {
                 return callback(null, true);
             }
@@ -39,7 +45,12 @@ function setupMiddleware(app) {
                 return callback(null, true);
             }
             
-            callback(new Error('Not allowed by CORS'));
+            // For development, be more restrictive
+            if (process.env.NODE_ENV !== 'production') {
+                callback(new Error('Not allowed by CORS'));
+            } else {
+                callback(null, true);
+            }
         },
         methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
         allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],

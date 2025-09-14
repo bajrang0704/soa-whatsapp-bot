@@ -34,18 +34,25 @@ class EnhancedRagService {
         try {
             console.log('🚀 Initializing Enhanced RAG System...');
             
-            // Check if we should skip Enhanced RAG in production due to Docker issues
-            if (process.env.NODE_ENV === 'production' && process.env.SKIP_ENHANCED_RAG === 'true') {
-                console.log('⚠️ Skipping Enhanced RAG System in production (Docker compatibility)');
-                this.isInitialized = false;
-                return;
-            }
-            
+            // Initialize Enhanced RAG System (removed SKIP_ENHANCED_RAG check)
             this.ragSystem = new EnhancedNodeRAGSystem();
             
             // Initialize the Enhanced RAG system first
             console.log('🔧 Initializing Enhanced RAG system...');
-            await this.ragSystem.initialize();
+            
+            // Set a timeout for initialization to prevent hanging
+            const initTimeout = setTimeout(() => {
+                throw new Error('Enhanced RAG initialization timeout after 60 seconds');
+            }, 60000);
+            
+            try {
+                await this.ragSystem.initialize();
+                clearTimeout(initTimeout);
+            } catch (initError) {
+                clearTimeout(initTimeout);
+                console.warn('⚠️ Enhanced RAG initialization failed:', initError.message);
+                throw initError;
+            }
             
             // Load the knowledge base
             const path = require('path');

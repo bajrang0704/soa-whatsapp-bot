@@ -54,6 +54,9 @@ class VoiceService {
                 language
             });
             
+            // Clean up audio buffer to prevent memory leaks
+            audioBuffer = null;
+            
             return {
                 transcript: result.transcript,
                 confidence: result.confidence,

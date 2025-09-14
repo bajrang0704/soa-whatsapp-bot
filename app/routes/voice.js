@@ -6,7 +6,7 @@
 
 const express = require('express');
 const { asyncHandler } = require('../middleware/errorHandler');
-const { validateAudioUpload } = require('../validators/voiceValidator');
+const { validateAudioUpload, validateTTSRequest } = require('../validators/voiceValidator');
 
 const VoiceController = require('../controllers/voiceController');
 
@@ -42,6 +42,7 @@ function setupVoiceRoutes() {
     
     // Text-to-Speech endpoint
     router.post('/text-to-speech',
+        validateTTSRequest,
         asyncHandler(voiceController.textToSpeech.bind(voiceController))
     );
     

@@ -1,5 +1,5 @@
-// Bundled JavaScript for SOA University College App
-console.log('🚀 Loading SOA University College App Bundle...');
+// Bundled JavaScript for SOA University College App - Updated for Complete Voice Pipeline
+console.log('🚀 Loading SOA University College App Bundle (Voice Pipeline v2.0)...');
 
 // University Data
 const universityData = {
@@ -300,6 +300,8 @@ class VoiceModule {
         this.isConversationActive = false;
         this.isProcessingVoice = false;
         this.isSpeaking = false;
+        this.conversationTimeout = null;
+        this.CONVERSATION_TIMEOUT = 600000; // 10 minutes
     }
 
     startVoiceConversation() {
@@ -312,8 +314,12 @@ class VoiceModule {
         }
         
         this.isConversationActive = true;
+        console.log('✅ Conversation marked as ACTIVE');
         this.updateVoiceButtonState('active');
         this.updateVoiceStatus(t('listening'));
+        
+        // Start conversation timeout
+        this.resetConversationTimeout();
         
         // Simple voice recording test
         this.testVoiceRecording();
@@ -322,8 +328,29 @@ class VoiceModule {
     stopVoiceConversation() {
         console.log('🛑 Stopping voice conversation');
         this.isConversationActive = false;
+        console.log('❌ Conversation marked as INACTIVE');
+        this.clearConversationTimeout();
         this.updateVoiceButtonState('ready');
         this.updateVoiceStatus(t('voice-ready'));
+    }
+
+    // Reset conversation timeout
+    resetConversationTimeout() {
+        this.clearConversationTimeout();
+        console.log('⏰ Resetting conversation timeout (10 minutes)');
+        this.conversationTimeout = setTimeout(() => {
+            console.log('⏰ Conversation timeout - ending conversation');
+            console.log('⏰ Timeout triggered - conversation was active for 10 minutes');
+            this.stopVoiceConversation();
+        }, this.CONVERSATION_TIMEOUT);
+    }
+
+    // Clear conversation timeout
+    clearConversationTimeout() {
+        if (this.conversationTimeout) {
+            clearTimeout(this.conversationTimeout);
+            this.conversationTimeout = null;
+        }
     }
 
     async testVoiceRecording() {
@@ -364,34 +391,42 @@ class VoiceModule {
         }
     }
 
-    async sendAudioToSTT(audioBlob) {
+      async sendAudioToSTT(audioBlob) {
         try {
+            console.log('🔄 Using complete voice pipeline: STT → RAG → LLM → TTS');
             this.updateVoiceStatus(t('processing'));
             
             const formData = new FormData();
             formData.append('audio', audioBlob, 'recording.webm');
             formData.append('language', currentLanguage === 'ar' ? 'ar' : 'en');
             
-            const response = await fetch('/api/voice/speech-to-text', {
+            // Use the complete voice pipeline (STT + RAG + LLM + TTS)
+            console.log('📤 Sending to /api/voice/process (complete pipeline)');
+            const response = await fetch('/api/voice/process', {
                 method: 'POST',
                 body: formData
             });
             
             const result = await response.json();
             
-            if (result.success && result.transcript) {
-                console.log('✅ Speech transcribed:', result.transcript);
-                this.handleVoiceResponse(`You said: "${result.transcript}"`);
+            if (result.success && result.pipeline) {
+                console.log('✅ Complete voice pipeline successful:', result.pipeline.stt.transcript);
+                console.log('🧠 RAG + LLM Response:', result.pipeline.rag?.response);
+                console.log('🔊 TTS Audio available:', !!result.pipeline.tts?.audioBuffer);
+                
+                // Use the intelligent RAG + LLM response instead of just repeating
+                const responseText = result.pipeline.rag?.response || 'I understand, but I need more information to help you better.';
+                this.handleVoiceResponse(responseText);
             } else {
-                console.warn('⚠️ No speech detected');
-                this.handleVoiceResponse('I didn\'t hear any speech. Please try again.');
+                console.warn('⚠️ No speech detected or pipeline failed');
+                this.handleVoiceResponse('I didn\'t hear any speech clearly. Please try again.');
             }
             
         } catch (error) {
-            console.error('❌ STT error:', error);
+            console.error('❌ Voice pipeline error:', error);
             this.handleVoiceResponse('Sorry, I had trouble processing your speech. Please try again.');
         }
-    }
+    } 
 
     handleVoiceResponse(responseText) {
         console.log('🤖 Voice response:', responseText);
@@ -405,6 +440,8 @@ class VoiceModule {
             
             utterance.onend = () => {
                 if (this.isConversationActive) {
+                    console.log('✅ TTS completed - resetting conversation timeout');
+                    this.resetConversationTimeout(); // Reset timeout after AI response
                     this.updateVoiceStatus(t('listening'));
                     setTimeout(() => this.testVoiceRecording(), 1000);
                 }
@@ -766,8 +803,8 @@ function updateStreamingVoiceButton(state) {
         case 'active':
             streamVoiceBtn.classList.add('active');
             streamVoiceBtnIcon.className = 'fas fa-microphone';
-            voiceBtnText.textContent = 'Click to Record';
-            streamVoiceBtn.onclick = () => toggleVoiceRecording();
+            voiceBtnText.textContent = 'Voice Active - Click to Stop';
+            streamVoiceBtn.onclick = () => stopStreamingVoice();
             break;
         case 'listening':
             streamVoiceBtn.classList.add('listening');
@@ -814,7 +851,7 @@ async function toggleVoiceRecording() {
             
             // Update status
             if (voiceStatus) {
-                voiceStatus.textContent = 'Voice service connected. Click to record.';
+                voiceStatus.textContent = 'Voice service connected. Ready to start conversation.';
             }
         }
         
