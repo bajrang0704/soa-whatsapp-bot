@@ -61,8 +61,19 @@ function setupMiddleware(app) {
     app.use(express.urlencoded({ extended: false }));
     app.use(express.json({ limit: '10mb' }));
     
-    // Static file serving
-    app.use(express.static(path.join(__dirname, '../../public')));
+    // Static file serving with error handling
+    app.use('/js', (req, res, next) => {
+        console.log(`📁 Serving JS file: ${req.path}`);
+        next();
+    });
+    
+    app.use(express.static(path.join(__dirname, '../../public'), {
+        setHeaders: (res, path) => {
+            if (path.endsWith('.js')) {
+                res.setHeader('Content-Type', 'application/javascript');
+            }
+        }
+    }));
     
     // Request logging
     app.use(requestLogger);

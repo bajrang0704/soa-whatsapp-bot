@@ -436,6 +436,7 @@ class VoiceController {
                         ragResult = cachedResponse.data;
                     } else {
                         console.log(`🧠 Processing RAG query: "${sttResult.transcript}" (${responseLanguage})`);
+                        console.log(`🔄 Voice Pipeline: STT → RAG → LLM → TTS`);
                         
                         // Call Enhanced RAG service directly (no HTTP call needed)
                         const ragResponse = await enhancedRagService.processQuery(
@@ -462,23 +463,40 @@ class VoiceController {
                             timestamp: Date.now()
                         });
                         
-                        console.log(`✅ RAG Response (${responseLanguage}): "${ragResult.response}"`);
+                        console.log(`✅ RAG + LLM Response (${responseLanguage}): "${ragResult.response}"`);
+                        console.log(`🎯 LLM Processing Complete - Ready for TTS`);
                     }
                     
                 } catch (ragError) {
                     console.error('❌ RAG processing error:', ragError.message);
-                    // Continue without RAG response
+                    // RAG is required - return error if it fails
+                    return res.status(500).json({
+                        success: false,
+                        error: 'RAG processing failed',
+                        message: ragError.message,
+                        timestamp: new Date().toISOString()
+                    });
                 }
             }
             
-            // Step 3: Generate Google Cloud TTS response (if RAG result exists)
+            // Step 3: Generate Google Cloud TTS response (RAG result is required)
             let ttsResult = null;
+            if (!ragResult || !ragResult.response) {
+                return res.status(500).json({
+                    success: false,
+                    error: 'No RAG response available for TTS',
+                    message: 'RAG processing did not produce a valid response',
+                    timestamp: new Date().toISOString()
+                });
+            }
+            
             if (ragResult && ragResult.response) {
                 try {
                     const responseLanguage = ragResult.language;
                     const voiceType = 'female'; // Default voice type
                     
-                    console.log(`🗣️ Generating Google Cloud TTS response (${responseLanguage}): "${ragResult.response.substring(0, 50)}..."`);
+                    console.log(`🗣️ TTS Processing: Converting LLM response to speech (${responseLanguage})`);
+                    console.log(`📝 TTS Input: "${ragResult.response.substring(0, 50)}..."`);
                     
                     ttsResult = await this.voiceService.textToSpeech({
                         text: ragResult.response,
@@ -491,7 +509,8 @@ class VoiceController {
                         }
                     });
                     
-                    console.log(`✅ Google Cloud TTS generated (${responseLanguage}): ${ttsResult.method || 'google-cloud'}`);
+                    console.log(`✅ TTS Complete: Audio generated (${responseLanguage}) - ${ttsResult.method || 'google-cloud'}`);
+                    console.log(`🎯 Voice Pipeline Complete: STT → RAG → LLM → TTS → User`);
                     
                 } catch (ttsError) {
                     console.error('❌ Google Cloud TTS generation error:', ttsError.message);

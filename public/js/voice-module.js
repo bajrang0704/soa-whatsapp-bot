@@ -25,17 +25,40 @@ export class VoiceModule {
         this.recordingTimeout = null;
         
         // Constants
-        this.CONVERSATION_TIMEOUT = 180000; // 3 minutes
+        this.CONVERSATION_TIMEOUT = 600000; // 10 minutes
         this.RESPONSE_DELAY = 500;
         this.MAX_RECORDING_TIME = 30000; // 30 seconds
         this.SILENCE_DURATION = 5000; // 5 seconds
         
         this.setupEventListeners();
+        this.setupWindowCloseListeners();
     }
 
     // Set current language
     setLanguage(language) {
         this.currentLanguage = language;
+    }
+
+    // Test backend connectivity
+    async testBackendConnectivity() {
+        try {
+            console.log('🔍 Testing backend connectivity...');
+            const response = await fetch('/api/voice/config', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            if (response.ok) {
+                const config = await response.json();
+                console.log('✅ Backend is accessible:', config);
+            } else {
+                console.warn('⚠️ Backend responded with status:', response.status);
+            }
+        } catch (error) {
+            console.error('❌ Backend connectivity test failed:', error);
+        }
     }
 
     // Setup event listeners
@@ -44,9 +67,113 @@ export class VoiceModule {
         // This will be set up in the main app initialization
     }
 
+    // Setup window close listeners for complete audio cleanup
+    setupWindowCloseListeners() {
+        console.log('🔧 Setting up window close listeners for audio cleanup');
+        
+        // Handle window close/refresh
+        window.addEventListener('beforeunload', () => {
+            console.log('🚪 Window closing - performing complete audio cleanup');
+            this.performCompleteAudioCleanup();
+        });
+        
+        // Handle page unload
+        window.addEventListener('unload', () => {
+            console.log('🚪 Page unloading - performing complete audio cleanup');
+            this.performCompleteAudioCleanup();
+        });
+        
+        // Handle page hide (mobile browsers)
+        document.addEventListener('pagehide', () => {
+            console.log('📱 Page hiding - performing complete audio cleanup');
+            this.performCompleteAudioCleanup();
+        });
+        
+        // Handle visibility change to hidden
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                console.log('👁️ Page hidden - performing complete audio cleanup');
+                this.performCompleteAudioCleanup();
+            }
+        });
+    }
+
+    // Perform complete audio cleanup
+    performCompleteAudioCleanup() {
+        console.log('🧹 Performing complete audio cleanup');
+        
+        // Stop all voice activities
+        this.stopVoiceConversation();
+        
+        // Emergency cleanup for any remaining audio
+        this.emergencyAudioCleanup();
+        
+        console.log('✅ Complete audio cleanup finished');
+    }
+
+    // Emergency audio cleanup for any remaining audio
+    emergencyAudioCleanup() {
+        console.log('🚨 Emergency audio cleanup');
+        
+        // Stop ALL speech synthesis activities
+        if (window.speechSynthesis) {
+            try {
+                window.speechSynthesis.cancel();
+                window.speechSynthesis.pause();
+                console.log('🔇 Emergency: Speech synthesis stopped');
+            } catch (e) {
+                console.log('⚠️ Emergency: Speech synthesis cleanup failed');
+            }
+        }
+        
+        // Stop ALL audio playback
+        if (window.currentAudio) {
+            try {
+                window.currentAudio.pause();
+                window.currentAudio.currentTime = 0;
+                window.currentAudio = null;
+                console.log('🔇 Emergency: Global audio stopped');
+            } catch (e) {
+                console.log('⚠️ Emergency: Global audio cleanup failed');
+            }
+        }
+        
+        // Stop ALL audio elements on the page
+        const allAudioElements = document.querySelectorAll('audio');
+        allAudioElements.forEach(audio => {
+            try {
+                audio.pause();
+                audio.currentTime = 0;
+            } catch (e) {
+                console.log('⚠️ Emergency: Audio element cleanup failed');
+            }
+        });
+        
+        // Close audio contexts
+        if (window.audioContext) {
+            try {
+                window.audioContext.close();
+                window.audioContext = null;
+                console.log('🔇 Emergency: Audio context closed');
+            } catch (e) {
+                console.log('⚠️ Emergency: Audio context cleanup failed');
+            }
+        }
+        
+        // Clear global references
+        if (window.currentVoiceUtterance) {
+            window.currentVoiceUtterance = null;
+        }
+        
+        console.log('🚨 Emergency audio cleanup completed');
+    }
+
     // Start voice conversation
     startVoiceConversation() {
         console.log('🚀 Starting human-like voice conversation');
+        
+        // Test backend connectivity
+        this.testBackendConnectivity();
         
         // Check security context
         const isSecureContext = window.isSecureContext || location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1';
@@ -64,6 +191,7 @@ export class VoiceModule {
         }
         
         this.isConversationActive = true;
+        console.log('✅ Conversation marked as ACTIVE');
         this.isProcessingVoice = false;
         this.isSpeaking = false;
         this.lastInteractionTime = Date.now();
@@ -89,29 +217,19 @@ export class VoiceModule {
         
         // Set all flags to false
         this.isConversationActive = false;
+        console.log('❌ Conversation marked as INACTIVE');
         this.isProcessingVoice = false;
         this.isSpeaking = false;
         this.isRecording = false;
         
-        // Stop speech synthesis
-        if (window.speechSynthesis) {
-            try {
-                window.speechSynthesis.cancel();
-            } catch (e) {
-                console.log('Synthesis already stopped');
-            }
-        }
+        // Stop microphone recording
+        this.stopMicrophone();
         
-        // Stop any ongoing audio
-        if (this.currentAudio) {
-            try {
-                this.currentAudio.pause();
-                this.currentAudio.currentTime = 0;
-                this.currentAudio = null;
-            } catch (e) {
-                console.log('Audio already stopped');
-            }
-        }
+        // Stop speech synthesis
+        this.stopAllSpeechSynthesis();
+        
+        // Stop any ongoing audio playback
+        this.stopAllAudioPlayback();
         
         // Clear all timeouts
         clearTimeout(this.conversationTimeout);
@@ -132,10 +250,112 @@ export class VoiceModule {
         }, 1500);
     }
 
+    // Stop microphone recording and release resources
+    stopMicrophone() {
+        console.log('🎤 Stopping microphone recording');
+        
+        // Stop media recorder
+        if (this.mediaRecorder && this.mediaRecorder.state !== 'inactive') {
+            try {
+                this.mediaRecorder.stop();
+                console.log('✅ MediaRecorder stopped');
+            } catch (e) {
+                console.log('⚠️ MediaRecorder already stopped');
+            }
+        }
+        
+        // Stop audio stream tracks
+        if (this.audioStream) {
+            try {
+                this.audioStream.getTracks().forEach(track => {
+                    track.stop();
+                    console.log('✅ Audio track stopped');
+                });
+                this.audioStream = null;
+            } catch (e) {
+                console.log('⚠️ Audio stream already stopped');
+            }
+        }
+        
+        // Stop audio level monitoring
+        this.stopAudioLevelMonitoring();
+        
+        // Clear audio chunks
+        this.audioChunks = [];
+        this.mediaRecorder = null;
+        this.isRecording = false;
+    }
+
+    // Stop all speech synthesis
+    stopAllSpeechSynthesis() {
+        console.log('🔇 Stopping all speech synthesis');
+        
+        if (window.speechSynthesis) {
+            try {
+                window.speechSynthesis.cancel();
+                window.speechSynthesis.pause();
+                console.log('✅ Speech synthesis stopped');
+            } catch (e) {
+                console.log('⚠️ Speech synthesis already stopped');
+            }
+        }
+        
+        // Clear any global utterance references
+        if (window.currentVoiceUtterance) {
+            window.currentVoiceUtterance = null;
+        }
+    }
+
+    // Stop all audio playback
+    stopAllAudioPlayback() {
+        console.log('🔇 Stopping all audio playback');
+        
+        // Stop current audio
+        if (this.currentAudio) {
+            try {
+                this.currentAudio.pause();
+                this.currentAudio.currentTime = 0;
+                this.currentAudio = null;
+                console.log('✅ Current audio stopped');
+            } catch (e) {
+                console.log('⚠️ Current audio already stopped');
+            }
+        }
+        
+        // Stop all audio elements on the page
+        const allAudioElements = document.querySelectorAll('audio');
+        allAudioElements.forEach(audio => {
+            try {
+                audio.pause();
+                audio.currentTime = 0;
+            } catch (e) {
+                console.log('⚠️ Audio element already stopped');
+            }
+        });
+        
+        // Stop any global audio
+        if (window.currentAudio) {
+            try {
+                window.currentAudio.pause();
+                window.currentAudio.currentTime = 0;
+                window.currentAudio = null;
+            } catch (e) {
+                console.log('⚠️ Global audio already stopped');
+            }
+        }
+    }
+
     // Start listening
     startListening() {
+        console.log('🎤 startListening() called - checking conditions:', {
+            isConversationActive: this.isConversationActive,
+            isRecording: this.isRecording,
+            isProcessingVoice: this.isProcessingVoice,
+            isSpeaking: this.isSpeaking
+        });
+        
         if (this.isConversationActive && !this.isRecording && !this.isProcessingVoice && !this.isSpeaking) {
-            console.log('🎤 Starting to listen...');
+            console.log('✅ All conditions met - starting to listen...');
             
             // Update UI for listening state
             this.updateVoiceAvatar('listening');
@@ -144,6 +364,8 @@ export class VoiceModule {
             
             // Start audio recording
             this.startAudioRecording();
+        } else {
+            console.log('❌ Cannot start listening - conditions not met');
         }
     }
 
@@ -164,13 +386,13 @@ export class VoiceModule {
             const constraints = iosCompatibility.isIOS ? 
                 iosCompatibility.getAudioConstraints() : 
                 { 
-                    audio: {
-                        sampleRate: 16000,
-                        channelCount: 1,
-                        echoCancellation: true,
-                        noiseSuppression: false,
-                        autoGainControl: true
-                    } 
+                audio: {
+                    sampleRate: 16000,
+                    channelCount: 1,
+                    echoCancellation: true,
+                    noiseSuppression: false,
+                    autoGainControl: true
+                } 
                 };
             
             this.audioStream = await navigator.mediaDevices.getUserMedia(constraints);
@@ -210,7 +432,7 @@ export class VoiceModule {
             if (iosCompatibility.isIOS) {
                 this.mediaRecorder = await iosCompatibility.createMediaRecorder();
             } else {
-                this.mediaRecorder = new MediaRecorder(this.audioStream, options);
+            this.mediaRecorder = new MediaRecorder(this.audioStream, options);
             }
             this.audioChunks = [];
             
@@ -312,10 +534,10 @@ export class VoiceModule {
         }
     }
 
-    // Send audio to Google Cloud
+    // Send audio to Google Cloud Voice Pipeline (STT + RAG + TTS)
     async sendAudioToGoogleCloud(audioBlob, mimeType = 'audio/webm') {
         try {
-            console.log('📤 Sending audio to Google Cloud...');
+            console.log('📤 Sending audio to Google Cloud Voice Pipeline...');
             
             const formData = new FormData();
             const fileName = mimeType.includes('webm') ? 'recording.webm' : 
@@ -323,6 +545,7 @@ export class VoiceModule {
             formData.append('audio', audioBlob, fileName);
             formData.append('language', this.currentLanguage === 'ar' ? 'ar' : 'en');
             
+            // Call the complete voice pipeline endpoint (STT + RAG + TTS)
             const response = await fetch('/api/voice/process', {
                 method: 'POST',
                 body: formData
@@ -333,17 +556,21 @@ export class VoiceModule {
             }
             
             const result = await response.json();
-            console.log('🎯 Google Cloud voice processing response:', result);
+            console.log('🎯 Google Cloud Voice Pipeline response:', result);
+            console.log('🔍 Full pipeline response details:', JSON.stringify(result, null, 2));
             
             if (result.success) {
-                // Check if we have a transcript from STT
+                // Check if we have a complete pipeline response
                 if (result.pipeline && result.pipeline.stt && result.pipeline.stt.transcript && result.pipeline.stt.transcript.trim().length > 0) {
-                    console.log('✅ Google Cloud STT transcription successful:', result.pipeline.stt.transcript);
+                    console.log('✅ Complete voice pipeline successful:', result.pipeline.stt.transcript);
+                    console.log('🧠 RAG result:', result.pipeline.rag);
+                    console.log('🔊 TTS result:', result.pipeline.tts);
                     
                     // Use the complete pipeline response (STT + RAG + TTS)
                     this.handleCompleteVoiceResponse(result.pipeline);
                 } else {
-                    console.warn('⚠️ No speech detected in audio');
+                    console.warn('⚠️ No speech detected in pipeline response');
+                    console.log('🔍 Pipeline structure:', result.pipeline);
                     const noSpeechMessage = this.currentLanguage === 'ar' 
                         ? 'لم أتمكن من سماع أي كلام. يرجى التحدث بوضوح وأقرب إلى الميكروفون.'
                         : 'I couldn\'t hear any speech. Please speak clearly and closer to the microphone.';
@@ -357,15 +584,16 @@ export class VoiceModule {
                     }, 3000);
                 }
             } else {
-                throw new Error(`Google Cloud voice processing failed: ${result.error || 'Unknown error'}`);
+                console.error('❌ Pipeline failed:', result.error);
+                throw new Error(`Google Cloud voice pipeline failed: ${result.error || 'Unknown error'}`);
             }
             
         } catch (error) {
-            console.error('❌ Google Cloud voice service error:', error);
+            console.error('❌ Google Cloud voice pipeline error:', error);
+            console.error('❌ Error details:', error.message);
             this.handleRecordingError('google-cloud-service-failed');
         }
     }
-
     // Handle complete voice pipeline response (STT + RAG + TTS)
     handleCompleteVoiceResponse(pipeline) {
         console.log('🎯 Processing complete voice pipeline response:', pipeline);
@@ -398,8 +626,27 @@ export class VoiceModule {
             this.updateVoiceAvatar('processing');
             this.showVoiceWaves(false);
             
-            // Use RAG response if available, otherwise generate fallback
-            const responseText = ragResponse || this.generateVoiceResponse(transcript);
+            // Use RAG response only (no fallback)
+            console.log('🧠 RAG Response received:', ragResponse);
+            console.log('🔍 RAG Response type:', typeof ragResponse);
+            console.log('🔍 RAG Response length:', ragResponse ? ragResponse.length : 'null');
+            
+            if (!ragResponse) {
+                console.error('❌ No RAG response received - this should not happen');
+                const errorMessage = this.currentLanguage === 'ar' 
+                    ? 'عذراً، حدث خطأ في معالجة استفسارك. يرجى المحاولة مرة أخرى.'
+                    : 'Sorry, there was an error processing your query. Please try again.';
+                this.updateVoiceStatus(errorMessage);
+                setTimeout(() => {
+                    if (this.isConversationActive) {
+                        this.startListening();
+                    }
+                }, 3000);
+                return;
+            }
+            
+            const responseText = ragResponse;
+            console.log('🎯 Final response text:', responseText);
             
             // Add AI response to conversation context
             this.conversationContext.push({
@@ -413,17 +660,30 @@ export class VoiceModule {
                 this.playTTSAudio(ttsAudio, responseText);
             } else {
                 this.speakTextContinuous(responseText, () => {
+                    console.log('🔄 TTS callback triggered - checking conversation state:', this.isConversationActive);
                     if (this.isConversationActive) {
                         console.log('🔄 Restarting listening after response');
+                        this.resetConversationTimeout(); // Reset timeout after AI response
                         setTimeout(() => {
                             this.startListening();
                         }, 300);
+                    } else {
+                        console.log('❌ Conversation not active - not restarting listening');
                     }
                 });
             }
         } else {
             console.warn('⚠️ No transcript in pipeline response');
-            this.handleRecordingError('no-transcript');
+            // Don't end conversation, just restart listening
+            if (this.isConversationActive) {
+                this.updateVoiceStatus(t('listening', this.currentLanguage));
+                this.updateVoiceButtonState('listening');
+                this.updateVoiceAvatar('listening');
+                this.showVoiceWaves(true);
+                setTimeout(() => {
+                    this.startListening();
+                }, 1000);
+            }
         }
     }
 
@@ -459,12 +719,20 @@ export class VoiceModule {
             
             // When audio finishes, restart listening
             audioSource.onended = () => {
+                console.log('✅ Backend TTS audio playback completed');
                 this.isSpeaking = false;
                 if (this.isConversationActive) {
-                    console.log('🔄 Restarting listening after TTS audio');
+                    console.log('🔄 Restarting listening after backend TTS audio');
+                    this.resetConversationTimeout(); // Reset timeout after AI response
+                    this.updateVoiceStatus(t('listening', this.currentLanguage));
+                    this.updateVoiceButtonState('listening');
+                    this.updateVoiceAvatar('listening');
+                    this.showVoiceWaves(true);
                     setTimeout(() => {
                         this.startListening();
                     }, 300);
+                } else {
+                    console.log('❌ Conversation not active - not restarting listening after TTS');
                 }
             };
             
@@ -620,13 +888,17 @@ export class VoiceModule {
         }
         else {
             const genericResponses = this.currentLanguage === 'ar' ? [
-                `أهلاً! سؤالك عن "${transcript}" مثير للاهتمام. دعني أساعدك في ذلك.`,
-                `نعم، "${transcript}" موضوع مهم. إليك ما أعرفه عنه.`,
-                `فهمت، تريد معرفة المزيد عن "${transcript}". هذا رائع!`
+                'أهلاً! سؤالك مثير للاهتمام. دعني أساعدك في ذلك.',
+                'نعم، هذا موضوع مهم. إليك ما أعرفه عنه.',
+                'فهمت، تريد معرفة المزيد. هذا رائع!',
+                'ممتاز! أنا هنا لمساعدتك في أي استفسار.',
+                'رائع! يمكنني إعطاؤك معلومات مفيدة عن الكلية.'
             ] : [
-                `That's interesting! You're asking about "${transcript}". Let me help you with that.`,
-                `Yes, "${transcript}" is an important topic. Here's what I can tell you.`,
-                `I understand you want to know more about "${transcript}". That's great!`
+                'That\'s interesting! Let me help you with that.',
+                'Yes, that\'s an important topic. Here\'s what I can tell you.',
+                'I understand you want to know more. That\'s great!',
+                'Excellent! I\'m here to help with any questions.',
+                'Great! I can provide you with useful information about the college.'
             ];
             
             response = genericResponses[Math.floor(Math.random() * genericResponses.length)];
@@ -693,6 +965,8 @@ export class VoiceModule {
                 }
                 
                 if (callback) {
+                    console.log('🔄 Calling TTS callback to restart listening...');
+                    this.resetConversationTimeout(); // Reset timeout after AI response
                     setTimeout(callback, 200);
                 }
             };
@@ -733,6 +1007,8 @@ export class VoiceModule {
             }
             
             if (callback) {
+                console.log('🔄 Calling browser TTS callback to restart listening...');
+                this.resetConversationTimeout(); // Reset timeout after AI response
                 setTimeout(callback, 200);
             }
         };
@@ -852,16 +1128,17 @@ export class VoiceModule {
             case 'active':
                 voiceBtn.classList.add('active');
                 voiceBtnIcon.className = 'fas fa-microphone';
-                voiceBtn.onclick = null; // No stop button - continuous conversation
+                voiceBtn.onclick = () => this.stopVoiceConversation(); // Allow stopping conversation
                 break;
             case 'listening':
                 voiceBtn.classList.add('listening');
                 voiceBtnIcon.className = 'fas fa-microphone';
+                voiceBtn.onclick = () => this.startListening();
                 break;
             case 'speaking':
                 voiceBtn.classList.add('speaking');
                 voiceBtnIcon.className = 'fas fa-volume-up';
-                voiceBtn.onclick = null; // No interrupt - let AI finish speaking
+                voiceBtn.onclick = () => this.interruptSpeaking(); // Allow interruption
                 break;
             case 'processing':
                 voiceBtn.classList.add('processing');
@@ -918,30 +1195,33 @@ export class VoiceModule {
     interruptSpeaking() {
         console.log('🖐️ User interrupted speaking');
         
-        if (window.speechSynthesis && window.speechSynthesis.speaking) {
-            window.speechSynthesis.cancel();
-        }
+        // Stop all speech synthesis
+        this.stopAllSpeechSynthesis();
+        
+        // Stop all audio playback
+        this.stopAllAudioPlayback();
         
         this.isSpeaking = false;
         this.wasInterrupted = true;
         
         if (this.isConversationActive) {
-            this.updateVoiceStatus(this.currentLanguage === 'ar' ? 'تم المقاطعة - أستمع الآن' : 'Interrupted - listening now');
+            this.updateVoiceStatus(this.currentLanguage === 'ar' ? 'تم المقاطعة - انقر للتحدث' : 'Interrupted - click to speak');
             this.updateVoiceButtonState('listening');
             this.updateVoiceAvatar('listening');
             this.showVoiceWaves(true);
             
-            setTimeout(() => {
-                this.startListening();
-            }, 300);
+            // Don't automatically start listening - wait for user to click
+            // User can click the button to start speaking again
         }
     }
 
     // Reset conversation timeout
     resetConversationTimeout() {
         clearTimeout(this.conversationTimeout);
+        console.log('⏰ Resetting conversation timeout (10 minutes)');
         this.conversationTimeout = setTimeout(() => {
             console.log('⏰ Conversation timeout - ending conversation');
+            console.log('⏰ Timeout triggered - conversation was active for 10 minutes');
             this.stopVoiceConversation();
         }, this.CONVERSATION_TIMEOUT);
     }
@@ -952,27 +1232,42 @@ export class VoiceModule {
         this.isProcessingVoice = false;
         
         let errorMessage;
+        let shouldEndConversation = false;
+        
         switch(errorType) {
             case 'mic-access-denied':
                 errorMessage = this.currentLanguage === 'ar' ? 'يرجى السماح بالوصول للميكروفون' : 'Please allow microphone access';
+                shouldEndConversation = true; // Critical error
                 break;
             case 'recording-failed':
                 errorMessage = this.currentLanguage === 'ar' ? 'فشل في التسجيل' : 'Recording failed';
+                shouldEndConversation = false; // Non-critical, can retry
                 break;
             case 'processing-failed':
                 errorMessage = this.currentLanguage === 'ar' ? 'فشل في معالجة الصوت' : 'Audio processing failed';
+                shouldEndConversation = false; // Non-critical, can retry
                 break;
             case 'google-cloud-service-failed':
                 errorMessage = this.currentLanguage === 'ar' ? 'خدمة التعرف على الصوت غير متاحة' : 'Voice recognition service unavailable';
+                shouldEndConversation = false; // Non-critical, can retry
                 break;
             case 'https-required':
                 errorMessage = this.currentLanguage === 'ar' ? 'الميكروفون يتطلب HTTPS أو localhost للعمل' : 'Microphone requires HTTPS or localhost to work';
+                shouldEndConversation = true; // Critical error
+                break;
+            case 'no-transcript':
+                errorMessage = this.currentLanguage === 'ar' ? 'لم يتم التعرف على الكلام' : 'No speech detected';
+                shouldEndConversation = false; // Non-critical, can retry
                 break;
             default:
                 errorMessage = t('error-occurred', this.currentLanguage);
+                shouldEndConversation = false; // Non-critical by default
         }
         
         this.updateVoiceStatus(errorMessage);
+        
+        if (shouldEndConversation) {
+            // End conversation for critical errors
         this.isConversationActive = false;
         this.updateVoiceButtonState('ready');
         this.updateVoiceAvatar('ready');
@@ -981,6 +1276,18 @@ export class VoiceModule {
         setTimeout(() => {
             this.updateVoiceStatus(t('voice-ready', this.currentLanguage));
         }, 5000);
+        } else {
+            // For non-critical errors, just restart listening after a delay
+            if (this.isConversationActive) {
+                setTimeout(() => {
+                    this.updateVoiceStatus(t('listening', this.currentLanguage));
+                    this.updateVoiceButtonState('listening');
+                    this.updateVoiceAvatar('listening');
+                    this.showVoiceWaves(true);
+                    this.startListening();
+                }, 2000);
+            }
+        }
     }
 
     // Handle send error

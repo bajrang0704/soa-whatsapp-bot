@@ -125,5 +125,24 @@ build/
 # Local development
 download.wav
 
+# Deployment scripts
+deploy-to-google-cloud.bat
+deploy-google-cloud.bat
+deploy.sh
+dockerfile.simple
+Dockerfile.ultra-simple
+test-script.sh
+
+# Audio files
+download.wav
+
+# Cloud build configuration
+cloudbuild.yaml
+
+# Environment files
+.env
 .env.example
+
+# Docker files
 .Dockerfile.*
+.cloudbuild.yaml

@@ -23,12 +23,17 @@ function createServer() {
     const app = express();
     const server = http.createServer(app);
     
-    // Configure Socket.IO
+    // Configure Socket.IO for AWS deployment
     const io = socketIo(server, {
         cors: {
             origin: "*",
             methods: ["GET", "POST"]
-        }
+        },
+        transports: ['websocket', 'polling'], // Add fallback transport
+        allowEIO3: true, // For compatibility
+        pingTimeout: 60000, // Increase timeout for AWS
+        pingInterval: 25000, // Increase interval for AWS
+        upgradeTimeout: 30000 // Increase upgrade timeout
     });
     
     // Setup middleware

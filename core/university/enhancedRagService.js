@@ -34,13 +34,7 @@ class EnhancedRagService {
         try {
             console.log('🚀 Initializing Enhanced RAG System...');
             
-            // Check if we should skip Enhanced RAG in production due to Docker issues
-            if (process.env.NODE_ENV === 'production' && process.env.SKIP_ENHANCED_RAG === 'true') {
-                console.log('⚠️ Skipping Enhanced RAG System in production (Docker compatibility)');
-                this.isInitialized = false;
-                return;
-            }
-            
+            // Initialize Enhanced RAG System (removed SKIP_ENHANCED_RAG check)
             this.ragSystem = new EnhancedNodeRAGSystem();
             
             // Initialize the Enhanced RAG system first

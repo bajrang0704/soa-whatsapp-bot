@@ -163,9 +163,9 @@
                 <!-- Voice Controls -->
                 <div class="voice-controls">
                     <!-- Main Voice Assistant Button -->
-                    <button class="voice-main-btn" id="streamVoiceBtn" onclick="toggleStreamingVoice()">
+                    <button class="voice-main-btn" id="voiceBtn">
                         <div class="voice-btn-content">
-                            <i class="fas fa-microphone" id="streamVoiceBtnIcon"></i>
+                            <i class="fas fa-microphone" id="voiceBtnIcon"></i>
                             <span class="voice-btn-text" id="voiceBtnText">Start Voice Assistant</span>
                         </div>
                     </button>
@@ -274,7 +274,10 @@
     <script src="js/ios-init.js"></script>
     <script src="/socket.io/socket.io.js"></script>
     <script type="module" src="js/ios-compatibility.js"></script>
-    <script src="js/livekit-service.js"></script>
+    <script type="module" src="js/socket-service.js"></script>
+    <script type="module" src="js/translations.js"></script>
+    <script type="module" src="js/voice-module.js"></script>
+    
     <script src="js/fallback-voice-service.js"></script>
     <script src="js/bundle.js"></script>
 </body>
