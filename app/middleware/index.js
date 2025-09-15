@@ -21,37 +21,7 @@ const { rateLimiter } = require('./rateLimiter');
 function setupMiddleware(app) {
     // CORS configuration - permissive for cloud deployment
     app.use(cors({
-        origin: function (origin, callback) {
-            // Allow requests with no origin (like mobile apps or curl requests)
-            if (!origin) return callback(null, true);
-            
-            // In production, allow all origins for cloud deployment
-            if (process.env.NODE_ENV === 'production') {
-                return callback(null, true);
-            }
-            
-            // Allow localhost and ngrok domains for development
-            if (origin.includes('localhost') || 
-                origin.includes('ngrok') || 
-                origin.includes('127.0.0.1') ||
-                origin.includes('run.app') ||
-                process.env.CORS_ORIGIN === "*") {
-                return callback(null, true);
-            }
-            
-            // Allow specific origins from environment
-            const allowedOrigins = process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : [];
-            if (allowedOrigins.includes(origin)) {
-                return callback(null, true);
-            }
-            
-            // For development, be more restrictive
-            if (process.env.NODE_ENV !== 'production') {
-                callback(new Error('Not allowed by CORS'));
-            } else {
-                callback(null, true);
-            }
-        },
+        origin: true, // Allow all origins in production
         methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
         allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
         credentials: true
