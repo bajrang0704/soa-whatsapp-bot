@@ -339,7 +339,9 @@ export class VoiceModule {
                 // Check if we have a transcript from STT
                 if (result.pipeline && result.pipeline.stt && result.pipeline.stt.transcript && result.pipeline.stt.transcript.trim().length > 0) {
                     console.log('✅ Google Cloud STT transcription successful:', result.pipeline.stt.transcript);
-                    this.handleTranscriptionResult(result.pipeline.stt.transcript);
+                    
+                    // Use the complete pipeline response (STT + RAG + TTS)
+                    this.handleCompleteVoiceResponse(result.pipeline);
                 } else {
                     console.warn('⚠️ No speech detected in audio');
                     const noSpeechMessage = this.currentLanguage === 'ar' 
@@ -364,7 +366,122 @@ export class VoiceModule {
         }
     }
 
-    // Handle transcription result
+    // Handle complete voice pipeline response (STT + RAG + TTS)
+    handleCompleteVoiceResponse(pipeline) {
+        console.log('🎯 Processing complete voice pipeline response:', pipeline);
+        
+        const transcript = pipeline.stt?.transcript;
+        const ragResponse = pipeline.rag?.response;
+        const ttsAudio = pipeline.tts?.audioBuffer;
+        
+        if (transcript && transcript.trim().length > 0) {
+            console.log('🗣️ User said:', transcript);
+            
+            // Add user message to conversation context
+            this.conversationContext.push({
+                role: 'user',
+                message: transcript,
+                timestamp: new Date().toISOString()
+            });
+            
+            // Keep only last 8 messages
+            if (this.conversationContext.length > 8) {
+                this.conversationContext = this.conversationContext.slice(-8);
+            }
+            
+            this.lastInteractionTime = Date.now();
+            this.resetConversationTimeout();
+            
+            this.isProcessingVoice = true;
+            this.updateVoiceStatus(t('processing', this.currentLanguage));
+            this.updateVoiceButtonState('processing');
+            this.updateVoiceAvatar('processing');
+            this.showVoiceWaves(false);
+            
+            // Use RAG response if available, otherwise generate fallback
+            const responseText = ragResponse || this.generateVoiceResponse(transcript);
+            
+            // Add AI response to conversation context
+            this.conversationContext.push({
+                role: 'assistant',
+                message: responseText,
+                timestamp: new Date().toISOString()
+            });
+            
+            // Play TTS audio if available, otherwise use browser TTS
+            if (ttsAudio) {
+                this.playTTSAudio(ttsAudio, responseText);
+            } else {
+                this.speakTextContinuous(responseText, () => {
+                    if (this.isConversationActive) {
+                        console.log('🔄 Restarting listening after response');
+                        setTimeout(() => {
+                            this.startListening();
+                        }, 300);
+                    }
+                });
+            }
+        } else {
+            console.warn('⚠️ No transcript in pipeline response');
+            this.handleRecordingError('no-transcript');
+        }
+    }
+
+    // Play TTS audio from backend
+    async playTTSAudio(base64Audio, responseText) {
+        try {
+            console.log('🔊 Playing TTS audio from backend...');
+            
+            // Convert base64 to audio buffer
+            const audioData = atob(base64Audio);
+            const audioBuffer = new ArrayBuffer(audioData.length);
+            const view = new Uint8Array(audioBuffer);
+            
+            for (let i = 0; i < audioData.length; i++) {
+                view[i] = audioData.charCodeAt(i);
+            }
+            
+            // Play audio
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const audioSource = audioContext.createBufferSource();
+            const audioBufferData = await audioContext.decodeAudioData(audioBuffer);
+            
+            audioSource.buffer = audioBufferData;
+            audioSource.connect(audioContext.destination);
+            
+            this.isSpeaking = true;
+            this.updateVoiceStatus(t('speaking', this.currentLanguage));
+            this.updateVoiceButtonState('speaking');
+            this.updateVoiceAvatar('speaking');
+            this.showVoiceWaves(false);
+            
+            audioSource.start();
+            
+            // When audio finishes, restart listening
+            audioSource.onended = () => {
+                this.isSpeaking = false;
+                if (this.isConversationActive) {
+                    console.log('🔄 Restarting listening after TTS audio');
+                    setTimeout(() => {
+                        this.startListening();
+                    }, 300);
+                }
+            };
+            
+        } catch (error) {
+            console.error('❌ Error playing TTS audio:', error);
+            // Fallback to browser TTS
+            this.speakTextContinuous(responseText, () => {
+                if (this.isConversationActive) {
+                    setTimeout(() => {
+                        this.startListening();
+                    }, 300);
+                }
+            });
+        }
+    }
+
+    // Handle transcription result (legacy method - kept for compatibility)
     handleTranscriptionResult(transcript) {
         console.log('🗣️ User said:', transcript);
         

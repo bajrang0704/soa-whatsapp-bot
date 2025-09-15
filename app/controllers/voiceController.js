@@ -43,7 +43,8 @@ class VoiceController {
             res.status(500).json({
                 success: false,
                 error: 'Speech-to-text conversion failed',
-                message: error.message
+                message: error.message,
+                timestamp: new Date().toISOString()
             });
         }
     }
@@ -87,7 +88,8 @@ class VoiceController {
             res.status(500).json({
                 success: false,
                 error: 'Text-to-speech conversion failed',
-                message: error.message
+                message: error.message,
+                timestamp: new Date().toISOString()
             });
         }
     }
@@ -136,11 +138,14 @@ class VoiceController {
                 language
             });
 
+            // Clean up audio buffer
+            audioBuffer = null;
+
             res.json({
                 success: true,
                 test: 'voice-processing',
                 audioInfo: {
-                    size: audioBuffer.length,
+                    size: req.file.size,
                     type: contentType,
                     language
                 },
@@ -334,6 +339,14 @@ class VoiceController {
                 bodyKeys: Object.keys(req.body)
             });
             
+            // Check service status before processing
+            const serviceStatus = await this.voiceService.getConfig();
+            console.log('🔍 Service status check:', {
+                sttConfigured: serviceStatus.services?.stt?.status?.configured,
+                ttsConfigured: serviceStatus.services?.tts?.primary?.status?.configured,
+                environment: process.env.NODE_ENV
+            });
+            
             if (!req.file) {
                 return res.status(400).json({
                     success: false,
@@ -342,6 +355,14 @@ class VoiceController {
             }
             
             const { language = 'en' } = req.body;
+            
+            // Validate language parameter
+            if (!['en', 'ar'].includes(language)) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'Invalid language. Supported languages: en, ar'
+                });
+            }
             
             // Handle both memory and disk storage
             let audioBuffer;
@@ -358,6 +379,14 @@ class VoiceController {
                 throw new Error('No audio data found in uploaded file');
             }
             
+            // Validate audio buffer
+            if (!audioBuffer || audioBuffer.length === 0) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'Audio file is empty or corrupted'
+                });
+            }
+            
             const contentType = req.file.mimetype;
             
             console.log('🎤 Processing voice audio with Google Cloud:', {
@@ -371,11 +400,23 @@ class VoiceController {
             });
             
             // Step 1: Google Cloud Speech-to-Text (optimized for speed)
-            const sttResult = await this.voiceService.speechToText({
-                audioBuffer,
-                contentType,
-                language
-            });
+            let sttResult;
+            try {
+                sttResult = await this.voiceService.speechToText({
+                    audioBuffer,
+                    contentType,
+                    language
+                });
+            } catch (sttError) {
+                console.error('❌ STT service failed:', sttError.message);
+                // Return a fallback response instead of crashing
+                return res.status(500).json({
+                    success: false,
+                    error: 'Speech-to-text service unavailable',
+                    message: 'STT service is currently unavailable. Please try again later.',
+                    details: process.env.NODE_ENV === 'development' ? sttError.message : undefined
+                });
+            }
             
             console.log(`✅ Google Cloud STT result: "${sttResult.transcript}" (confidence: ${sttResult.confidence})`);
             
@@ -454,9 +495,17 @@ class VoiceController {
                     
                 } catch (ttsError) {
                     console.error('❌ Google Cloud TTS generation error:', ttsError.message);
-                    // Continue without TTS
+                    console.error('❌ TTS Error details:', {
+                        name: ttsError.name,
+                        message: ttsError.message,
+                        code: ttsError.code
+                    });
+                    // Continue without TTS - don't fail the entire request
                 }
             }
+            
+            // Clean up audio buffer to prevent memory leaks
+            audioBuffer = null;
             
             // Return complete pipeline result
             res.json({
@@ -487,10 +536,18 @@ class VoiceController {
             
         } catch (error) {
             console.error('❌ Process voice error:', error);
+            console.error('❌ Error stack:', error.stack);
+            console.error('❌ Error details:', {
+                name: error.name,
+                message: error.message,
+                code: error.code,
+                status: error.status
+            });
             res.status(500).json({
                 success: false,
                 error: 'Voice processing failed',
-                message: error.message
+                message: error.message,
+                details: process.env.NODE_ENV === 'development' ? error.stack : undefined
             });
         }
     }

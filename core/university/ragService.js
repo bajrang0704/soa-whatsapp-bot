@@ -1,10 +1,9 @@
-const axios = require('axios');
 const fs = require('fs');
 const path = require('path');
 
 class RAGService {
     constructor() {
-        this.ragServerUrl = 'http://localhost:3001';
+        // Remove hardcoded localhost URL - not needed for fallback service
         this.soaData = this.loadSOAData();
         console.log('🚀 RAG Service initialized with fallback data');
     }
@@ -12,13 +11,35 @@ class RAGService {
     loadSOAData() {
         try {
             const dataPath = path.join(__dirname, '../../data/soa-departments.json');
+            
+            // Check if file exists
+            if (!fs.existsSync(dataPath)) {
+                console.warn('⚠️ SOA departments data file not found, using default data');
+                return this.getDefaultSOAData();
+            }
+            
             const data = JSON.parse(fs.readFileSync(dataPath, 'utf8'));
             console.log(`📚 Loaded ${data.departments?.length || 0} departments for fallback RAG`);
             return data;
         } catch (error) {
             console.error('❌ Error loading SOA data for RAG:', error.message);
-            return { departments: [] };
+            console.log('🔄 Using default SOA data');
+            return this.getDefaultSOAData();
         }
+    }
+
+    getDefaultSOAData() {
+        return {
+            departments: [
+                { name_en: "Medicine", name_ar: "الطب" },
+                { name_en: "Dentistry", name_ar: "طب الأسنان" },
+                { name_en: "Pharmacy", name_ar: "الصيدلة" },
+                { name_en: "Engineering", name_ar: "الهندسة" },
+                { name_en: "Business Administration", name_ar: "إدارة الأعمال" },
+                { name_en: "Computer Science", name_ar: "علوم الحاسوب" },
+                { name_en: "Nursing", name_ar: "التمريض" }
+            ]
+        };
     }
 
     async processQuery(userQuery, language = 'en') {
@@ -26,7 +47,18 @@ class RAGService {
         
         // Skip HTTP call to avoid infinite loop - use fallback directly
         console.log(`🧠 Using local fallback RAG for: "${userQuery}"`);
-        return this.processWithFallbackRAG(userQuery, language);
+        const response = this.processWithFallbackRAG(userQuery, language);
+        
+        // Return consistent format
+        return {
+            response: response,
+            confidence: 0.8,
+            sources: ['SOA University College Knowledge Base'],
+            performance: {
+                processingTime: Date.now(),
+                method: 'fallback_rag'
+            }
+        };
     }
 
     processWithFallbackRAG(userQuery, language) {

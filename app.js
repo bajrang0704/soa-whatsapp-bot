@@ -33,7 +33,7 @@ async function startApplication() {
         
         server.listen(PORT, '0.0.0.0', () => {
             console.log('✅ Server started successfully!');
-            console.log(`🌐 Web Interface: http://0.0.0.0:${PORT}`);
+            console.log(`🌐 Web Interface: http://localhost:${PORT}`);
             console.log(`🎤 Voice API: http://0.0.0.0:${PORT}/api/voice`);
             console.log(`🎙️ Voice Stream: ws://0.0.0.0:${PORT}/voice-stream`);
             console.log(`🏥 Health Check: http://0.0.0.0:${PORT}/health`);

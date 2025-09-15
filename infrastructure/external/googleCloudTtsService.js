@@ -67,7 +67,8 @@ class GoogleCloudTtsService {
                 return;
             }
 
-            console.warn('⚠️ No Google Cloud TTS credentials found');
+            console.warn('⚠️ No Google Cloud TTS credentials found - TTS will not work');
+            console.warn('⚠️ Please set GOOGLE_CLOUD_PROJECT_ID, GOOGLE_CLOUD_PRIVATE_KEY, and GOOGLE_CLOUD_CLIENT_EMAIL environment variables');
         } catch (error) {
             console.warn('⚠️ Could not load service account:', error.message);
         }
