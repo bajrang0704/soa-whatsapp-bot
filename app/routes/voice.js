@@ -46,6 +46,11 @@ function setupVoiceRoutes() {
         asyncHandler(voiceController.textToSpeech.bind(voiceController))
     );
     
+    // Initial greeting endpoint for voice conversations
+    router.post('/initial-greeting',
+        asyncHandler(voiceController.initialGreeting.bind(voiceController))
+    );
+    
     // Voice configuration endpoints
     router.get('/config',
         asyncHandler(voiceController.getConfig.bind(voiceController))

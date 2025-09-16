@@ -23,17 +23,18 @@ function createServer() {
     const app = express();
     const server = http.createServer(app);
     
-    // Configure Socket.IO for AWS deployment
+    // Configure Socket.IO for better compatibility
     const io = socketIo(server, {
         cors: {
             origin: "*",
             methods: ["GET", "POST"]
         },
-        transports: ['websocket', 'polling'], // Add fallback transport
-        allowEIO3: true, // For compatibility
-        pingTimeout: 60000, // Increase timeout for AWS
-        pingInterval: 25000, // Increase interval for AWS
-        upgradeTimeout: 30000 // Increase upgrade timeout
+        transports: ['polling', 'websocket'], // Start with polling, upgrade to websocket
+        allowEIO3: true, // Allow Engine.IO v3 clients for compatibility
+        pingTimeout: 60000, // Increase timeout
+        pingInterval: 25000, // Increase interval
+        upgradeTimeout: 30000, // Increase upgrade timeout
+        maxHttpBufferSize: 1e6 // 1MB buffer
     });
     
     // Setup middleware

@@ -6,6 +6,7 @@ import { iosCompatibility } from './ios-compatibility.js';
 export class VoiceModule {
     constructor() {
         this.currentLanguage = 'en';
+        console.log(`🌐 VoiceModule initialized with language: ${this.currentLanguage}`);
         this.isConversationActive = false;
         this.isProcessingVoice = false;
         this.isSpeaking = false;
@@ -24,11 +25,16 @@ export class VoiceModule {
         this.microphone = null;
         this.recordingTimeout = null;
         
+        // Audio playback tracking
+        this.currentAudioSource = null;
+        this.currentAudioContext = null;
+        this.currentAudio = null;
+        
         // Constants
-        this.CONVERSATION_TIMEOUT = 600000; // 10 minutes
-        this.RESPONSE_DELAY = 500;
-        this.MAX_RECORDING_TIME = 30000; // 30 seconds
-        this.SILENCE_DURATION = 5000; // 5 seconds
+        this.CONVERSATION_TIMEOUT = 150000; // 10 minutes
+        this.RESPONSE_DELAY = 100;
+        this.MAX_RECORDING_TIME = 7000; // 15 seconds
+        this.SILENCE_DURATION = 1000; // 3 seconds
         
         this.setupEventListeners();
         this.setupWindowCloseListeners();
@@ -89,11 +95,13 @@ export class VoiceModule {
             this.performCompleteAudioCleanup();
         });
         
-        // Handle visibility change to hidden
+        // Handle visibility change to hidden (only stop if conversation is not active)
         document.addEventListener('visibilitychange', () => {
-            if (document.hidden) {
-                console.log('👁️ Page hidden - performing complete audio cleanup');
+            if (document.hidden && !this.isConversationActive) {
+                console.log('👁️ Page hidden and conversation not active - performing audio cleanup');
                 this.performCompleteAudioCleanup();
+            } else if (document.hidden && this.isConversationActive) {
+                console.log('👁️ Page hidden but conversation active - keeping conversation running');
             }
         });
     }
@@ -149,14 +157,36 @@ export class VoiceModule {
             }
         });
         
+        // Stop Web Audio API sources
+        if (this.currentAudioSource) {
+            try {
+                this.currentAudioSource.stop();
+                this.currentAudioSource.disconnect();
+                this.currentAudioSource = null;
+                console.log('🔇 Emergency: Web Audio source stopped');
+            } catch (e) {
+                console.log('⚠️ Emergency: Web Audio source cleanup failed');
+            }
+        }
+        
         // Close audio contexts
+        if (this.currentAudioContext) {
+            try {
+                this.currentAudioContext.close();
+                this.currentAudioContext = null;
+                console.log('🔇 Emergency: Audio context closed');
+            } catch (e) {
+                console.log('⚠️ Emergency: Audio context cleanup failed');
+            }
+        }
+        
         if (window.audioContext) {
             try {
                 window.audioContext.close();
                 window.audioContext = null;
-                console.log('🔇 Emergency: Audio context closed');
+                console.log('🔇 Emergency: Global audio context closed');
             } catch (e) {
-                console.log('⚠️ Emergency: Audio context cleanup failed');
+                console.log('⚠️ Emergency: Global audio context cleanup failed');
             }
         }
         
@@ -170,7 +200,7 @@ export class VoiceModule {
 
     // Start voice conversation
     startVoiceConversation() {
-        console.log('🚀 Starting human-like voice conversation');
+        console.log('🚀 Starting voice conversation');
         
         // Test backend connectivity
         this.testBackendConnectivity();
@@ -198,7 +228,9 @@ export class VoiceModule {
         
         // Update UI
         this.updateVoiceButtonState('active');
-        this.updateVoiceStatus(t('listening', this.currentLanguage));
+        const listeningText = t('listening', this.currentLanguage);
+        console.log(`🔍 Translation result for 'listening': "${listeningText}" (language: ${this.currentLanguage})`);
+        this.updateVoiceStatus(listeningText);
         this.updateVoiceAvatar('listening');
         this.showVoiceWaves(true);
         
@@ -212,8 +244,19 @@ export class VoiceModule {
     }
 
     // Stop voice conversation
-    stopVoiceConversation() {
-        console.log('🛑 Stopping voice conversation');
+    stopVoiceConversation(force = false) {
+        console.log('🛑 Stopping voice conversation', force ? '(forced)' : '');
+        console.log('🔍 Current state before stop:', {
+            isConversationActive: this.isConversationActive,
+            isProcessingVoice: this.isProcessingVoice,
+            isSpeaking: this.isSpeaking,
+            isRecording: this.isRecording
+        });
+        
+        // If not forced and conversation is active, ask for confirmation
+        if (!force && this.isConversationActive) {
+            console.log('⚠️ Conversation is active - stopping gracefully');
+        }
         
         // Set all flags to false
         this.isConversationActive = false;
@@ -310,6 +353,29 @@ export class VoiceModule {
     stopAllAudioPlayback() {
         console.log('🔇 Stopping all audio playback');
         
+        // Stop Web Audio API sources
+        if (this.currentAudioSource) {
+            try {
+                this.currentAudioSource.stop();
+                this.currentAudioSource.disconnect();
+                this.currentAudioSource = null;
+                console.log('✅ Web Audio source stopped');
+            } catch (e) {
+                console.log('⚠️ Web Audio source already stopped');
+            }
+        }
+        
+        // Close audio context
+        if (this.currentAudioContext) {
+            try {
+                this.currentAudioContext.close();
+                this.currentAudioContext = null;
+                console.log('✅ Audio context closed');
+            } catch (e) {
+                console.log('⚠️ Audio context already closed');
+            }
+        }
+        
         // Stop current audio
         if (this.currentAudio) {
             try {
@@ -356,6 +422,11 @@ export class VoiceModule {
         
         if (this.isConversationActive && !this.isRecording && !this.isProcessingVoice && !this.isSpeaking) {
             console.log('✅ All conditions met - starting to listen...');
+            console.log('🔍 Current audio stream status:', {
+                hasAudioStream: !!this.audioStream,
+                audioStreamActive: this.audioStream ? this.audioStream.active : false,
+                audioTracks: this.audioStream ? this.audioStream.getAudioTracks().length : 0
+            });
             
             // Update UI for listening state
             this.updateVoiceAvatar('listening');
@@ -382,36 +453,57 @@ export class VoiceModule {
                 }
             }
             
-            // Use iOS-compatible audio constraints
+            // Use iOS-compatible audio constraints with higher quality
             const constraints = iosCompatibility.isIOS ? 
                 iosCompatibility.getAudioConstraints() : 
                 { 
                 audio: {
-                    sampleRate: 16000,
+                    sampleRate: 48000, // Higher sample rate for better quality
                     channelCount: 1,
                     echoCancellation: true,
-                    noiseSuppression: false,
-                    autoGainControl: true
+                    noiseSuppression: true, // Enable noise suppression
+                    autoGainControl: true,
+                    latency: 0.01 // Low latency
                 } 
                 };
             
             this.audioStream = await navigator.mediaDevices.getUserMedia(constraints);
             
             console.log('✅ Microphone access granted successfully');
+            console.log('🔍 Audio stream tracks:', this.audioStream.getAudioTracks().length);
+            console.log('🔍 Audio track settings:', this.audioStream.getAudioTracks()[0]?.getSettings());
+            
+            // Check microphone permissions
+            const permissionStatus = await navigator.permissions.query({ name: 'microphone' });
+            console.log('🔍 Microphone permission status:', permissionStatus.state);
+            
+            // Test if microphone is actually working
+            const audioTrack = this.audioStream.getAudioTracks()[0];
+            if (audioTrack) {
+                console.log('🔍 Audio track state:', audioTrack.readyState);
+                console.log('🔍 Audio track enabled:', audioTrack.enabled);
+                console.log('🔍 Audio track muted:', audioTrack.muted);
+            }
             
             // Set up audio level monitoring
             this.setupAudioLevelMonitoring(this.audioStream);
             
             // Create MediaRecorder with Google Cloud-compatible formats
             const options = { 
-                audioBitsPerSecond: 16000
+                audioBitsPerSecond: 128000, // Higher bitrate for better quality
+                sampleRate: 48000, // Higher sample rate
+                channelCount: 1 // Mono audio
             };
             
-            // Try formats in order of Google Cloud compatibility
+            // Try formats in order of Google Cloud compatibility (prefer WAV)
             const supportedFormats = [
+                'audio/wav;codecs=1', // WAV with PCM codec
                 'audio/wav',
+                'audio/mp4;codecs=mp4a.40.2', // MP4 with AAC codec
                 'audio/mp4',
+                'audio/webm;codecs=opus', // WebM with Opus codec
                 'audio/webm',
+                'audio/ogg;codecs=opus', // OGG with Opus codec
                 'audio/ogg'
             ];
             
@@ -470,10 +562,10 @@ export class VoiceModule {
             // Auto-stop after reasonable time
             setTimeout(() => {
                 if (this.isRecording && !this.isSpeaking) {
-                    console.log('🔇 Auto-stopping after recording period (15 seconds)');
+                    console.log('🔇 Auto-stopping after recording period (10 seconds)');
                     this.stopAudioRecording();
                 }
-            }, 15000);
+            }, 7000);
             
         } catch (error) {
             console.error('❌ Failed to start recording:', error);
@@ -499,7 +591,9 @@ export class VoiceModule {
             // Stop audio level monitoring
             this.stopAudioLevelMonitoring();
             
-            this.updateVoiceStatus(t('processing', this.currentLanguage));
+            const processingText = t('processing', this.currentLanguage);
+            console.log(`🔍 Translation result for 'processing': "${processingText}" (language: ${this.currentLanguage})`);
+            this.updateVoiceStatus(processingText);
             this.updateVoiceButtonState('processing');
         }
     }
@@ -515,7 +609,7 @@ export class VoiceModule {
                 return;
             }
             
-            console.log('🔄 Creating audio blob for Deepgram...');
+            console.log('🔄 Creating audio blob for Google Cloud...');
             
             let mimeType = this.mediaRecorder?.mimeType || 'audio/webm';
             if (mimeType.includes('opus')) {
@@ -524,6 +618,25 @@ export class VoiceModule {
             
             const audioBlob = new Blob(this.audioChunks, { type: mimeType });
             console.log(`🎵 Audio blob created: ${audioBlob.size} bytes, type: ${mimeType}`);
+            console.log(`🔍 Audio chunks collected: ${this.audioChunks.length} chunks`);
+            console.log(`🔍 Total audio duration: ~${Math.round(audioBlob.size / 16000)} seconds (estimated)`);
+            
+            // Validate audio blob size
+            if (audioBlob.size < 1000) {
+                console.warn('⚠️ Audio blob is very small, might not contain speech');
+            }
+            
+            // Check if we have any audio data
+            if (this.audioChunks.length === 0) {
+                console.error('❌ No audio chunks collected - microphone may not be working');
+                if (this.isConversationActive) {
+                    setTimeout(() => this.startListening(), 1000);
+                }
+                return;
+            }
+            
+            // Log audio quality info
+            console.log(`🔍 Audio quality check: ${audioBlob.size} bytes, ${this.audioChunks.length} chunks, format: ${mimeType}`);
             
             // Send to Google Cloud
             await this.sendAudioToGoogleCloud(audioBlob, mimeType);
@@ -706,6 +819,10 @@ export class VoiceModule {
             const audioSource = audioContext.createBufferSource();
             const audioBufferData = await audioContext.decodeAudioData(audioBuffer);
             
+            // Store references for interruption
+            this.currentAudioSource = audioSource;
+            this.currentAudioContext = audioContext;
+            
             audioSource.buffer = audioBufferData;
             audioSource.connect(audioContext.destination);
             
@@ -721,6 +838,12 @@ export class VoiceModule {
             audioSource.onended = () => {
                 console.log('✅ Backend TTS audio playback completed');
                 this.isSpeaking = false;
+                this.isProcessingVoice = false; // Reset processing state
+                
+                // Clear audio source references
+                this.currentAudioSource = null;
+                this.currentAudioContext = null;
+                
                 if (this.isConversationActive) {
                     console.log('🔄 Restarting listening after backend TTS audio');
                     this.resetConversationTimeout(); // Reset timeout after AI response
@@ -950,12 +1073,21 @@ export class VoiceModule {
             const audioSource = audioContext.createBufferSource();
             const audioBufferData = await audioContext.decodeAudioData(audioBuffer);
             
+            // Store references for interruption
+            this.currentAudioSource = audioSource;
+            this.currentAudioContext = audioContext;
+            
             audioSource.buffer = audioBufferData;
             audioSource.connect(audioContext.destination);
             
             audioSource.onended = () => {
                 console.log('✅ Google Cloud TTS playback completed');
                 this.isSpeaking = false;
+                this.isProcessingVoice = false; // Reset processing state
+                
+                // Clear audio source references
+                this.currentAudioSource = null;
+                this.currentAudioContext = null;
                 
                 if (this.isConversationActive) {
                     this.updateVoiceStatus(t('listening', this.currentLanguage));
@@ -1034,9 +1166,9 @@ export class VoiceModule {
             if (response.ok) {
                 const data = await response.json();
                 if (data.success) {
-                    console.log('✅ Initial greeting received:', data.message);
+                    console.log('✅ Initial greeting received:', data.greeting);
                     // Play the audio or use TTS
-                    this.speakTextContinuous(data.message, callback);
+                    this.speakTextContinuous(data.greeting, callback);
                     return;
                 }
             }
@@ -1080,8 +1212,14 @@ export class VoiceModule {
                     const average = sum / bufferLength;
                     const volume = average > 0 ? 20 * Math.log10(average / 255) : -Infinity;
                     
-                    if (Math.random() < 0.1) { // 10% chance to log
-                        console.log(`🎤 Audio level: ${volume.toFixed(1)} dB`);
+                    // Log audio level more frequently during recording
+                    if (Math.random() < 0.3) { // 30% chance to log
+                        console.log(`🎤 Audio level: ${volume.toFixed(1)} dB (avg: ${average.toFixed(1)})`);
+                    }
+                    
+                    // Warn if audio level is very low
+                    if (average < 5 && this.isRecording) {
+                        console.warn(`⚠️ Very low audio level detected: ${average.toFixed(1)} (volume: ${volume.toFixed(1)} dB)`);
                     }
                     
                     requestAnimationFrame(checkAudioLevel);
@@ -1113,8 +1251,9 @@ export class VoiceModule {
     updateVoiceButtonState(state) {
         const voiceBtn = document.getElementById('voiceBtn');
         const voiceBtnIcon = document.getElementById('voiceBtnIcon');
+        const voiceBtnText = document.getElementById('voiceBtnText');
         
-        if (!voiceBtn || !voiceBtnIcon) return;
+        if (!voiceBtn || !voiceBtnIcon || !voiceBtnText) return;
         
         // Remove all state classes
         voiceBtn.classList.remove('ready', 'active', 'listening', 'speaking', 'processing');
@@ -1123,26 +1262,31 @@ export class VoiceModule {
             case 'ready':
                 voiceBtn.classList.add('ready');
                 voiceBtnIcon.className = 'fas fa-play';
+                voiceBtnText.textContent = 'Start Voice Assistant';
                 voiceBtn.onclick = () => this.startVoiceConversation();
                 break;
             case 'active':
                 voiceBtn.classList.add('active');
                 voiceBtnIcon.className = 'fas fa-microphone';
+                voiceBtnText.textContent = 'Stop Voice Assistant';
                 voiceBtn.onclick = () => this.stopVoiceConversation(); // Allow stopping conversation
                 break;
             case 'listening':
                 voiceBtn.classList.add('listening');
                 voiceBtnIcon.className = 'fas fa-microphone';
+                voiceBtnText.textContent = 'Listening...';
                 voiceBtn.onclick = () => this.startListening();
                 break;
             case 'speaking':
                 voiceBtn.classList.add('speaking');
                 voiceBtnIcon.className = 'fas fa-volume-up';
+                voiceBtnText.textContent = 'Click to Interrupt';
                 voiceBtn.onclick = () => this.interruptSpeaking(); // Allow interruption
                 break;
             case 'processing':
                 voiceBtn.classList.add('processing');
                 voiceBtnIcon.className = 'fas fa-cog fa-spin';
+                voiceBtnText.textContent = 'Thinking...';
                 break;
         }
     }
@@ -1185,9 +1329,33 @@ export class VoiceModule {
     }
 
     updateVoiceStatus(status) {
+        console.log(`🔄 Updating voice status to: "${status}"`);
         const statusElement = document.getElementById('voiceStatus');
         if (statusElement) {
+            const oldStatus = statusElement.textContent;
             statusElement.textContent = status;
+            console.log(`✅ Voice status updated successfully: "${oldStatus}" → "${status}"`);
+            console.log(`🔍 Status element details:`, {
+                id: statusElement.id,
+                textContent: statusElement.textContent,
+                innerHTML: statusElement.innerHTML,
+                visible: statusElement.offsetParent !== null,
+                display: window.getComputedStyle(statusElement).display
+            });
+            
+            // Verify the update actually worked
+            setTimeout(() => {
+                const currentStatus = statusElement.textContent;
+                if (currentStatus !== status) {
+                    console.warn(`⚠️ Status was overridden: expected "${status}", got "${currentStatus}"`);
+                    console.warn(`🔍 Current element state:`, {
+                        textContent: statusElement.textContent,
+                        innerHTML: statusElement.innerHTML
+                    });
+                }
+            }, 100);
+        } else {
+            console.error(`❌ Voice status element not found!`);
         }
     }
 
@@ -1201,18 +1369,41 @@ export class VoiceModule {
         // Stop all audio playback
         this.stopAllAudioPlayback();
         
+        // Reset all speaking states
         this.isSpeaking = false;
+        this.isProcessingVoice = false;
         this.wasInterrupted = true;
         
+        // Clear audio source references
+        this.currentAudioSource = null;
+        this.currentAudioContext = null;
+        
         if (this.isConversationActive) {
-            this.updateVoiceStatus(this.currentLanguage === 'ar' ? 'تم المقاطعة - انقر للتحدث' : 'Interrupted - click to speak');
+            this.updateVoiceStatus(this.currentLanguage === 'ar' ? 'تم المقاطعة - أستمع الآن' : 'Interrupted - listening now');
             this.updateVoiceButtonState('listening');
             this.updateVoiceAvatar('listening');
             this.showVoiceWaves(true);
             
-            // Don't automatically start listening - wait for user to click
-            // User can click the button to start speaking again
+            // Automatically start listening after interrupt
+            setTimeout(() => {
+                console.log('🔄 Checking conditions for auto-start after interrupt:', {
+                    isConversationActive: this.isConversationActive,
+                    isSpeaking: this.isSpeaking,
+                    isProcessingVoice: this.isProcessingVoice,
+                    isRecording: this.isRecording,
+                    audioStream: !!this.audioStream
+                });
+                
+                if (this.isConversationActive && !this.isSpeaking && !this.isProcessingVoice) {
+                    console.log('🔄 Auto-starting listening after interrupt');
+                    this.startListening();
+                } else {
+                    console.log('❌ Cannot auto-start listening - conditions not met');
+                }
+            }, 500); // Small delay to ensure audio cleanup is complete
         }
+        
+        console.log('✅ Interrupt completed - audio stopped and state reset');
     }
 
     // Reset conversation timeout

@@ -21,6 +21,7 @@ class GoogleCloudSttService {
         this.supportedLanguages = ['en', 'ar'];
         this.supportedEncodings = {
             'audio/wav': 'LINEAR16',
+            'audio/mp4': 'MP3', // MP4 with AAC codec maps to MP3 encoding
             'audio/mp3': 'MP3',
             'audio/mpeg': 'MP3',
             'audio/ogg': 'OGG_OPUS',
@@ -193,6 +194,8 @@ class GoogleCloudSttService {
             
             // Get appropriate sample rate for the format
             let sampleRate = this.getSampleRate(contentType);
+            
+            console.log(`🔍 Audio format detection: ${contentType} -> encoding: ${encoding}, sampleRate: ${sampleRate}Hz`);
             
             // Special handling for WebM format - try to convert to WAV if needed
             if (contentType === 'audio/webm' && encoding === 'WEBM_OPUS') {
@@ -392,10 +395,11 @@ class GoogleCloudSttService {
      * @returns {number} Sample rate in Hz
      */
     getSampleRate(contentType) {
-        // WebM audio from browsers is typically 48kHz, but Google Cloud STT works best with 16kHz
-        // However, we need to match the actual sample rate of the audio
+        // Support higher quality audio from frontend (48kHz)
+        // Google Cloud STT supports up to 48kHz for better accuracy
         const sampleRates = {
-            'audio/wav': 16000,
+            'audio/wav': 48000,  // Updated to 48kHz for better quality
+            'audio/mp4': 44100,  // MP4 with AAC codec typically uses 44.1kHz
             'audio/webm': 48000, // WebM from browsers is usually 48kHz
             'audio/ogg': 48000,  // OGG Opus is usually 48kHz
             'audio/mp3': 44100,  // MP3 is usually 44.1kHz

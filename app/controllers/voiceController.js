@@ -422,6 +422,7 @@ class VoiceController {
             
             // Step 2: Process with RAG (if transcript exists) - with caching and timeout optimization
             let ragResult = null;
+            console.log(`🔍 STT Result Check: transcript="${sttResult.transcript}", hasTranscript=${!!(sttResult.transcript && sttResult.transcript.trim())}`);
             if (sttResult.transcript && sttResult.transcript.trim()) {
                 try {
                     // Determine response language based on detected language and user preference
@@ -481,18 +482,60 @@ class VoiceController {
             
             // Step 3: Generate Google Cloud TTS response (RAG result is required)
             let ttsResult = null;
+            console.log(`🔍 RAG Result Check: ragResult=${!!ragResult}, hasResponse=${!!(ragResult && ragResult.response)}`);
             if (!ragResult || !ragResult.response) {
-                return res.status(500).json({
-                    success: false,
-                    error: 'No RAG response available for TTS',
-                    message: 'RAG processing did not produce a valid response',
-                    timestamp: new Date().toISOString()
-                });
+                // Handle case where no speech was detected or RAG failed
+                const noSpeechMessage = language === 'ar' ? 
+                    "لم أتمكن من سماعك بوضوح. يرجى المحاولة مرة أخرى." : 
+                    "I couldn't hear you clearly. Please try again.";
+                
+                console.log(`⚠️ No speech detected or RAG failed, providing fallback response`);
+                
+                // Generate a fallback TTS response
+                try {
+                    ttsResult = await this.voiceService.textToSpeech({
+                        text: noSpeechMessage,
+                        language: language,
+                        voiceType: 'female',
+                        options: { speed: 1.2, pitch: 0.0, volume: 0.0 }
+                    });
+                    
+                    return res.json({
+                        success: true,
+                        pipeline: {
+                            stt: { 
+                                transcript: '', 
+                                confidence: 0, 
+                                language: language, 
+                                duration: 0, 
+                                provider: 'google-cloud' 
+                            },
+                            rag: null,
+                            tts: { 
+                                method: ttsResult.method || 'google-cloud', 
+                                audioBuffer: ttsResult.audioBuffer ? ttsResult.audioBuffer.toString('base64') : null, 
+                                contentType: ttsResult.contentType, 
+                                duration: ttsResult.duration, 
+                                instructions: noSpeechMessage 
+                            }
+                        },
+                        timestamp: new Date().toISOString()
+                    });
+                } catch (ttsError) {
+                    console.error('❌ Fallback TTS error:', ttsError.message);
+                    return res.status(500).json({
+                        success: false,
+                        error: 'No speech detected and fallback TTS failed',
+                        message: 'Please try speaking again',
+                        timestamp: new Date().toISOString()
+                    });
+                }
             }
             
             if (ragResult && ragResult.response) {
                 try {
-                    const responseLanguage = ragResult.language;
+                    // Determine the actual language of the response text
+                    const responseLanguage = this.determineResponseLanguageFromText(ragResult.response);
                     const voiceType = 'female'; // Default voice type
                     
                     console.log(`🗣️ TTS Processing: Converting LLM response to speech (${responseLanguage})`);
@@ -572,6 +615,25 @@ class VoiceController {
     }
     
     /**
+     * Determines the language of response text by analyzing the actual content
+     * @param {string} responseText - The response text to analyze
+     * @returns {string} Language code (ar or en)
+     */
+    determineResponseLanguageFromText(responseText) {
+        // Check if response contains Arabic characters
+        const arabicRegex = /[\u0600-\u06FF]/;
+        const hasArabicChars = arabicRegex.test(responseText);
+        
+        if (hasArabicChars) {
+            console.log(`✅ Response text contains Arabic characters - using Arabic TTS`);
+            return 'ar';
+        } else {
+            console.log(`✅ Response text is in English - using English TTS`);
+            return 'en';
+        }
+    }
+    
+    /**
      * Determines the response language based on detected language and transcript
      * @param {string} detectedLanguage - Language detected by STT
      * @param {string} transcript - The transcript text
@@ -636,6 +698,54 @@ class VoiceController {
         // Default to English
         console.log(`⚠️ Defaulting to English`);
         return 'en';
+    }
+    
+    /**
+     * Handles initial greeting for voice conversations
+     * @param {express.Request} req - Express request object
+     * @param {express.Response} res - Express response object
+     */
+    async initialGreeting(req, res) {
+        try {
+            const { language = 'en' } = req.body;
+            
+            console.log(`🎯 Generating initial greeting for language: ${language}`);
+            
+            // Generate appropriate greeting based on language
+            let greetingText;
+            if (language === 'ar') {
+                greetingText = "مرحباً! أنا مساعد الكلية الصوتي. كيف يمكنني مساعدتك اليوم؟";
+            } else {
+                greetingText = "Hi, this is the administration desk of SOA college. How can I help you?";
+            }
+            
+            // Generate TTS audio for the greeting
+            const ttsResult = await this.voiceService.textToSpeech({
+                text: greetingText,
+                language: language,
+                voiceType: 'female',
+                options: { speed: 1.2, pitch: 0.0, volume: 0.0 }
+            });
+            
+            res.json({
+                success: true,
+                greeting: greetingText,
+                audioBuffer: ttsResult.audioBuffer ? ttsResult.audioBuffer.toString('base64') : null,
+                contentType: ttsResult.contentType,
+                duration: ttsResult.duration,
+                language: language,
+                timestamp: new Date().toISOString()
+            });
+            
+        } catch (error) {
+            console.error('❌ Initial greeting error:', error);
+            res.status(500).json({
+                success: false,
+                error: 'Failed to generate initial greeting',
+                message: error.message,
+                timestamp: new Date().toISOString()
+            });
+        }
     }
 }
 

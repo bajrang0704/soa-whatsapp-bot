@@ -54,6 +54,9 @@ class App {
         voiceModule.setLanguage(this.currentLanguage);
         departmentsModule.setLanguage(this.currentLanguage);
         
+        // Make voice module globally available for debugging
+        window.voiceModule = voiceModule;
+        
         // Initialize speech synthesis
         if ('speechSynthesis' in window) {
             console.log('✅ Speech synthesis initialized');
@@ -86,6 +89,9 @@ class App {
                 this.closeModals();
             }
         });
+        
+        // Setup specific modal event listeners
+        this.setupModalEventListeners();
         
         // Smooth scrolling for navigation
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
@@ -225,6 +231,22 @@ class App {
         this.closeVoiceAgent();
     }
 
+    // Open chatbot
+    openChatbot() {
+        console.log('🔓 Opening chatbot modal');
+        const chatbotModal = document.getElementById('chatbotModal');
+        if (chatbotModal) {
+            chatbotModal.classList.add('show');
+            // Focus on input
+            setTimeout(() => {
+                const chatInput = document.getElementById('chatInput');
+                if (chatInput) {
+                    chatInput.focus();
+                }
+            }, 100);
+        }
+    }
+
     // Close chatbot
     closeChatbot() {
         const chatbotModal = document.getElementById('chatbotModal');
@@ -233,15 +255,25 @@ class App {
         }
     }
 
+    // Open voice agent
+    openVoiceAgent() {
+        console.log('🔓 Opening voice agent modal');
+        const voiceModal = document.getElementById('voiceModal');
+        if (voiceModal) {
+            voiceModal.classList.add('show');
+        }
+    }
+
     // Close voice agent
     closeVoiceAgent() {
+        console.log('🔒 Closing voice agent modal');
         const voiceModal = document.getElementById('voiceModal');
         if (voiceModal) {
             voiceModal.classList.remove('show');
             
-            // Stop voice conversation
+            // Stop voice conversation (force stop when modal is closed)
             if (voiceModule.isConversationActive) {
-                voiceModule.stopVoiceConversation();
+                voiceModule.stopVoiceConversation(true);
             }
         }
     }
@@ -281,6 +313,47 @@ class App {
                 voiceBtnIcon.className = 'fas fa-cog fa-spin';
                 break;
         }
+    }
+    
+    // Setup modal event listeners
+    setupModalEventListeners() {
+        // Voice modal click outside to close
+        const voiceModal = document.getElementById('voiceModal');
+        if (voiceModal) {
+            voiceModal.addEventListener('click', (event) => {
+                if (event.target === voiceModal) {
+                    console.log('🖱️ Clicked outside voice modal - closing');
+                    this.closeVoiceAgent();
+                }
+            });
+        }
+        
+        // Chatbot modal click outside to close
+        const chatbotModal = document.getElementById('chatbotModal');
+        if (chatbotModal) {
+            chatbotModal.addEventListener('click', (event) => {
+                if (event.target === chatbotModal) {
+                    console.log('🖱️ Clicked outside chatbot modal - closing');
+                    this.closeChatbot();
+                }
+            });
+        }
+        
+        // Escape key to close modals
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape') {
+                const voiceModal = document.getElementById('voiceModal');
+                const chatbotModal = document.getElementById('chatbotModal');
+                
+                if (voiceModal && voiceModal.classList.contains('show')) {
+                    console.log('⌨️ Escape key pressed - closing voice modal');
+                    this.closeVoiceAgent();
+                } else if (chatbotModal && chatbotModal.classList.contains('show')) {
+                    console.log('⌨️ Escape key pressed - closing chatbot modal');
+                    this.closeChatbot();
+                }
+            }
+        });
     }
 
     // Initialize animations
@@ -332,6 +405,9 @@ class App {
 document.addEventListener('DOMContentLoaded', () => {
     window.app = new App();
 });
+
+// Global functions are now defined in global-functions.js
+// This ensures they're available immediately when HTML loads
 
 // Export for global access
 export default App;

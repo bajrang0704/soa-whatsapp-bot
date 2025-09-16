@@ -55,14 +55,22 @@ export class DepartmentsModule {
         const card = document.createElement('div');
         card.className = 'department-card';
         
-        // Translate shifts
-        const shifts = data.shift.map(shift => 
+        // Translate shifts - handle both array and string
+        const shiftArray = Array.isArray(data.shift) ? data.shift : [data.shift];
+        const shifts = shiftArray.map(shift => 
             shift === 'Morning' ? t('morning', this.currentLanguage) : 
             shift === 'Evening' ? t('evening', this.currentLanguage) : shift
         ).join(', ');
         
-        const minGrade = Object.values(data.minimum_grade).join(' - ');
-        const tuition = Object.values(data.tuition_fee).join(' - ');
+        // Handle minimum_grade - can be number or object
+        const minGrade = typeof data.minimum_grade === 'object' 
+            ? Object.values(data.minimum_grade).join(' - ')
+            : data.minimum_grade;
+            
+        // Handle tuition_fee - can be number or object
+        const tuition = typeof data.tuition_fee === 'object' 
+            ? Object.values(data.tuition_fee).join(' - ')
+            : data.tuition_fee;
         
         // Translate category
         const categoryKey = data.category.toLowerCase();

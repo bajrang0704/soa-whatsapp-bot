@@ -10,11 +10,14 @@ class SocketService {
     // Initialize Socket.IO connection
     initialize() {
         try {
-            // iOS-compatible Socket.IO configuration
+            // Enhanced Socket.IO configuration for better compatibility
             const options = {
-                transports: ['websocket', 'polling'], // Fallback to polling for iOS
+                transports: ['polling', 'websocket'], // Start with polling, upgrade to websocket
                 timeout: 20000,
-                forceNew: true
+                forceNew: true,
+                upgrade: true,
+                rememberUpgrade: false,
+                autoConnect: true
             };
             
             this.socket = io(options);
@@ -37,6 +40,14 @@ class SocketService {
             this.socket.on('connect_error', (error) => {
                 console.error('❌ Socket.IO connection error:', error);
                 this.isConnected = false;
+                
+                // Retry connection after a delay
+                setTimeout(() => {
+                    if (!this.isConnected) {
+                        console.log('🔄 Retrying Socket.IO connection...');
+                        this.socket.connect();
+                    }
+                }, 3000);
             });
             
             // Handle typing indicators
