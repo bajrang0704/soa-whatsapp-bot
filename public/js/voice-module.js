@@ -33,7 +33,7 @@ export class VoiceModule {
         // Constants
         this.CONVERSATION_TIMEOUT = 150000; // 10 minutes
         this.RESPONSE_DELAY = 100;
-        this.MAX_RECORDING_TIME = 7000; // 15 seconds
+        this.MAX_RECORDING_TIME = 7000; // 7 seconds
         this.SILENCE_DURATION = 1000; // 3 seconds
         
         this.setupEventListeners();
@@ -202,10 +202,7 @@ export class VoiceModule {
     startVoiceConversation() {
         console.log('🚀 Starting voice conversation');
         
-        // Test backend connectivity
-        this.testBackendConnectivity();
-        
-        // Check security context
+        // Check security context first (fast)
         const isSecureContext = window.isSecureContext || location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1';
         
         if (!isSecureContext) {
@@ -226,17 +223,24 @@ export class VoiceModule {
         this.isSpeaking = false;
         this.lastInteractionTime = Date.now();
         
-        // Update UI
+        // Update UI to show speaking state immediately
         this.updateVoiceButtonState('active');
-        const listeningText = t('listening', this.currentLanguage);
-        console.log(`🔍 Translation result for 'listening': "${listeningText}" (language: ${this.currentLanguage})`);
-        this.updateVoiceStatus(listeningText);
-        this.updateVoiceAvatar('listening');
-        this.showVoiceWaves(true);
+        this.updateVoiceStatus(t('speaking', this.currentLanguage));
+        this.updateVoiceAvatar('speaking');
+        this.showVoiceWaves(false);
         
-        // Start the conversation with greeting
+        // Test backend connectivity in background (non-blocking)
+        this.testBackendConnectivity();
+        
+        // Start the conversation with greeting immediately
         this.playInitialGreeting(() => {
             if (this.isConversationActive) {
+                // Only show listening state after greeting is complete
+                const listeningText = t('listening', this.currentLanguage);
+                console.log(`🔍 Translation result for 'listening': "${listeningText}" (language: ${this.currentLanguage})`);
+                this.updateVoiceStatus(listeningText);
+                this.updateVoiceAvatar('listening');
+                this.showVoiceWaves(true);
                 this.startListening();
                 this.resetConversationTimeout();
             }
@@ -1150,9 +1154,18 @@ export class VoiceModule {
 
     // Play initial greeting
     async playInitialGreeting(callback) {
+        console.log('🎯 Playing initial greeting...');
+        
+        // Use fallback greeting immediately for instant response
+        const fallbackGreeting = this.currentLanguage === 'ar' 
+            ? 'مرحباً، هذا مكتب الإدارة في كلية سلطان للفنون. كيف يمكنني مساعدتك؟'
+            : 'Hi, this is the administration desk of SOA college. How can I help you?';
+        
+        // Start speaking immediately with fallback
+        this.speakTextContinuous(fallbackGreeting, callback);
+        
+        // Try to get enhanced greeting from backend in background (non-blocking)
         try {
-            console.log('🎯 Playing initial greeting...');
-            
             const response = await fetch('/api/voice/initial-greeting', {
                 method: 'POST',
                 headers: {
@@ -1165,26 +1178,13 @@ export class VoiceModule {
             
             if (response.ok) {
                 const data = await response.json();
-                if (data.success) {
-                    console.log('✅ Initial greeting received:', data.greeting);
-                    // Play the audio or use TTS
-                    this.speakTextContinuous(data.greeting, callback);
-                    return;
+                if (data.success && data.greeting !== fallbackGreeting) {
+                    console.log('✅ Enhanced initial greeting received:', data.greeting);
+                    // Note: We could interrupt and play the enhanced greeting, but for now we'll use fallback for instant response
                 }
             }
-            
-            // Fallback greeting
-            const fallbackGreeting = this.currentLanguage === 'ar' 
-                ? 'مرحباً، هذا مكتب الإدارة في كلية سلطان للفنون. كيف يمكنني مساعدتك؟'
-                : 'Hi, this is the administration desk of SOA college. How can I help you?';
-            this.speakTextContinuous(fallbackGreeting, callback);
-            
         } catch (error) {
-            console.error('❌ Error playing initial greeting:', error);
-            const fallbackGreeting = this.currentLanguage === 'ar' 
-                ? 'مرحباً، هذا مكتب الإدارة في كلية سلطان للفنون. كيف يمكنني مساعدتك؟'
-                : 'Hi, this is the administration desk of SOA college. How can I help you?';
-            this.speakTextContinuous(fallbackGreeting, callback);
+            console.log('ℹ️ Using fallback greeting (backend greeting unavailable)');
         }
     }
 
@@ -1265,12 +1265,12 @@ export class VoiceModule {
                 voiceBtnText.textContent = 'Start Voice Assistant';
                 voiceBtn.onclick = () => this.startVoiceConversation();
                 break;
-            case 'active':
+          /*  case 'active':
                 voiceBtn.classList.add('active');
                 voiceBtnIcon.className = 'fas fa-microphone';
                 voiceBtnText.textContent = 'Stop Voice Assistant';
                 voiceBtn.onclick = () => this.stopVoiceConversation(); // Allow stopping conversation
-                break;
+                break; */
             case 'listening':
                 voiceBtn.classList.add('listening');
                 voiceBtnIcon.className = 'fas fa-microphone';
