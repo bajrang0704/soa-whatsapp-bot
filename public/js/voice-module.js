@@ -33,8 +33,21 @@ export class VoiceModule {
         // Constants
         this.CONVERSATION_TIMEOUT = 150000; // 10 minutes
         this.RESPONSE_DELAY = 100;
-        this.MAX_RECORDING_TIME = 7000; // 7 seconds
-        this.SILENCE_DURATION = 1000; // 3 seconds
+        this.MAX_RECORDING_TIME = 7000; // 7 seconds (fallback)
+        this.SILENCE_DURATION = 1500; // 1.5 seconds of silence to stop recording
+        
+        // Voice Activity Detection (VAD) constants
+        this.SPEECH_THRESHOLD = 0.1; // Audio level threshold for speech detection
+        this.SILENCE_THRESHOLD = 0.05; // Audio level threshold for silence
+        this.MIN_SPEECH_DURATION = 500; // Minimum speech duration (ms)
+        this.VAD_CHECK_INTERVAL = 100; // Check audio levels every 100ms
+        
+        // VAD state variables
+        this.isSpeechDetected = false;
+        this.speechStartTime = null;
+        this.silenceStartTime = null;
+        this.vadInterval = null;
+        this.currentAudioLevel = 0;
         
         this.setupEventListeners();
         this.setupWindowCloseListeners();
@@ -415,7 +428,7 @@ export class VoiceModule {
         }
     }
 
-    // Start listening
+    // Start listening with Voice Activity Detection
     startListening() {
         console.log('🎤 startListening() called - checking conditions:', {
             isConversationActive: this.isConversationActive,
@@ -425,7 +438,7 @@ export class VoiceModule {
         });
         
         if (this.isConversationActive && !this.isRecording && !this.isProcessingVoice && !this.isSpeaking) {
-            console.log('✅ All conditions met - starting to listen...');
+            console.log('✅ All conditions met - starting Voice Activity Detection...');
             console.log('🔍 Current audio stream status:', {
                 hasAudioStream: !!this.audioStream,
                 audioStreamActive: this.audioStream ? this.audioStream.active : false,
@@ -437,7 +450,7 @@ export class VoiceModule {
             this.showVoiceWaves(true);
             this.updateVoiceStatus(t('listening', this.currentLanguage));
             
-            // Start audio recording
+            // Start Voice Activity Detection (this will start recording when speech is detected)
             this.startAudioRecording();
         } else {
             console.log('❌ Cannot start listening - conditions not met');
@@ -553,23 +566,15 @@ export class VoiceModule {
             this.mediaRecorder.start(1000); // Collect data every second
             this.isRecording = true;
             
-            console.log('🔴 Recording started for Google Cloud');
+            console.log('🔴 Recording started with Voice Activity Detection');
             
-            // Set maximum recording time
+            // Set maximum recording time as fallback (in case VAD fails)
             this.recordingTimeout = setTimeout(() => {
                 if (this.isRecording) {
-                    console.log('⏰ Maximum recording time reached');
+                    console.log('⏰ Maximum recording time reached (fallback)');
                     this.stopAudioRecording();
                 }
             }, this.MAX_RECORDING_TIME);
-            
-            // Auto-stop after reasonable time
-            setTimeout(() => {
-                if (this.isRecording && !this.isSpeaking) {
-                    console.log('🔇 Auto-stopping after recording period (10 seconds)');
-                    this.stopAudioRecording();
-                }
-            }, 7000);
             
         } catch (error) {
             console.error('❌ Failed to start recording:', error);
@@ -1188,7 +1193,7 @@ export class VoiceModule {
         }
     }
 
-    // Audio level monitoring
+    // Voice Activity Detection (VAD) - Enhanced audio monitoring
     setupAudioLevelMonitoring(stream) {
         try {
             this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -1201,40 +1206,120 @@ export class VoiceModule {
             
             this.microphone.connect(this.analyser);
             
-            const checkAudioLevel = () => {
-                if (this.analyser && this.isRecording) {
-                    this.analyser.getByteFrequencyData(dataArray);
-                    
-                    let sum = 0;
-                    for (let i = 0; i < bufferLength; i++) {
-                        sum += dataArray[i];
-                    }
-                    const average = sum / bufferLength;
-                    const volume = average > 0 ? 20 * Math.log10(average / 255) : -Infinity;
-                    
-                    // Log audio level more frequently during recording
-                    if (Math.random() < 0.3) { // 30% chance to log
-                        console.log(`🎤 Audio level: ${volume.toFixed(1)} dB (avg: ${average.toFixed(1)})`);
-                    }
-                    
-                    // Warn if audio level is very low
-                    if (average < 5 && this.isRecording) {
-                        console.warn(`⚠️ Very low audio level detected: ${average.toFixed(1)} (volume: ${volume.toFixed(1)} dB)`);
-                    }
-                    
-                    requestAnimationFrame(checkAudioLevel);
-                }
-            };
+            // Start VAD monitoring
+            this.startVoiceActivityDetection(dataArray, bufferLength);
             
-            checkAudioLevel();
-            console.log('✅ Audio level monitoring started');
+            console.log('✅ Voice Activity Detection started');
             
         } catch (error) {
-            console.warn('⚠️ Audio level monitoring failed:', error);
+            console.warn('⚠️ Voice Activity Detection failed:', error);
         }
     }
 
+    // Start Voice Activity Detection
+    startVoiceActivityDetection(dataArray, bufferLength) {
+        // Clear any existing VAD interval
+        if (this.vadInterval) {
+            clearInterval(this.vadInterval);
+        }
+        
+        // Reset VAD state
+        this.isSpeechDetected = false;
+        this.speechStartTime = null;
+        this.silenceStartTime = null;
+        
+        // Start VAD monitoring
+        this.vadInterval = setInterval(() => {
+            if (this.analyser && this.isRecording) {
+                this.analyser.getByteFrequencyData(dataArray);
+                
+                // Calculate audio level
+                let sum = 0;
+                for (let i = 0; i < bufferLength; i++) {
+                    sum += dataArray[i];
+                }
+                const average = sum / bufferLength;
+                this.currentAudioLevel = average / 255; // Normalize to 0-1
+                
+                // Detect speech activity
+                this.detectSpeechActivity();
+            }
+        }, this.VAD_CHECK_INTERVAL);
+    }
+
+    // Detect speech activity and manage recording
+    detectSpeechActivity() {
+        const now = Date.now();
+        const audioLevel = this.currentAudioLevel;
+        
+        // Log audio level occasionally
+        if (Math.random() < 0.1) { // 10% chance to log
+            console.log(`🎤 VAD: Audio level ${audioLevel.toFixed(3)} (threshold: ${this.SPEECH_THRESHOLD})`);
+        }
+        
+        if (audioLevel > this.SPEECH_THRESHOLD) {
+            // Speech detected
+            if (!this.isSpeechDetected) {
+                console.log('🗣️ Speech detected - starting recording');
+                this.isSpeechDetected = true;
+                this.speechStartTime = now;
+                this.silenceStartTime = null;
+                
+                // Start recording if not already recording
+                if (!this.isRecording) {
+                    this.startAudioRecording();
+                }
+            }
+        } else {
+            // Silence detected
+            if (this.isSpeechDetected) {
+                if (!this.silenceStartTime) {
+                    this.silenceStartTime = now;
+                    console.log('🔇 Silence detected - starting silence timer');
+                } else {
+                    const silenceDuration = now - this.silenceStartTime;
+                    
+                    // Check if silence duration exceeds threshold
+                    if (silenceDuration >= this.SILENCE_DURATION) {
+                        const speechDuration = this.speechStartTime ? now - this.speechStartTime : 0;
+                        
+                        // Only stop if we had meaningful speech
+                        if (speechDuration >= this.MIN_SPEECH_DURATION) {
+                            console.log(`✅ Speech ended - stopping recording (speech: ${speechDuration}ms, silence: ${silenceDuration}ms)`);
+                            this.stopAudioRecording();
+                            this.isSpeechDetected = false;
+                            this.speechStartTime = null;
+                            this.silenceStartTime = null;
+                        } else {
+                            console.log(`⚠️ Speech too short (${speechDuration}ms) - continuing to listen`);
+                            this.silenceStartTime = null; // Reset silence timer
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Stop Voice Activity Detection
+    stopVoiceActivityDetection() {
+        if (this.vadInterval) {
+            clearInterval(this.vadInterval);
+            this.vadInterval = null;
+        }
+        
+        // Reset VAD state
+        this.isSpeechDetected = false;
+        this.speechStartTime = null;
+        this.silenceStartTime = null;
+        this.currentAudioLevel = 0;
+        
+        console.log('🔇 Voice Activity Detection stopped');
+    }
+
     stopAudioLevelMonitoring() {
+        // Stop Voice Activity Detection
+        this.stopVoiceActivityDetection();
+        
         if (this.microphone) {
             this.microphone.disconnect();
             this.microphone = null;
